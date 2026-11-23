@@ -33,13 +33,22 @@ class Music(commands.Cog):
             return
 
         vc = interaction.guild.voice_client
-        if not vc:
-            vc = await user.voice.channel.connect()
-        elif vc.channel != user.voice.channel:
+        # Chống bắt cóc bot: Nếu bot đang ở phòng khác có người nghe, yêu cầu vào cùng phòng
+        if vc and vc.channel != user.voice.channel:
+            if len([m for m in vc.channel.members if not m.bot]) > 0:
+                await interaction.followup.send(
+                    f"❌ Bot đang phát nhạc tại kênh thoại **{vc.channel.name}**! "
+                    "Vui lòng tham gia cùng phòng hoặc đợi bài hát kết thúc.",
+                    ephemeral=True
+                )
+                return
             await vc.move_to(user.voice.channel)
+        elif not vc:
+            vc = await user.voice.channel.connect()
 
+        # Giải quyết link Spotify không gây nghẽn Event Loop (chạy qua asyncio.to_thread)
         if "spotify.com" in query:
-            spotify_query = resolve_spotify_link(query)
+            spotify_query = await asyncio.to_thread(resolve_spotify_link, query)
             if spotify_query:
                 query = spotify_query
             else:
@@ -47,7 +56,7 @@ class Music(commands.Cog):
                 return
 
         player = self.get_player(interaction)
-        loop = self.bot.loop or asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         with yt_dlp.YoutubeDL(YTDL_SEARCH_OPTIONS) as ytdl:
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(query, download=False))
@@ -146,11 +155,15 @@ class Music(commands.Cog):
     async def leave(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         if vc:
-            await vc.disconnect()
             if interaction.guild_id in self.players:
-                self.players[interaction.guild_id].queue.clear()
-                self.players[interaction.guild_id].audio_player_task.cancel()
+                player = self.players[interaction.guild_id]
+                player.queue.clear()
+                player.audio_player_task.cancel()
                 del self.players[interaction.guild_id]
+            try:
+                await vc.disconnect()
+            except Exception:
+                pass
             await interaction.response.send_message("👋 Đã rời khỏi phòng và làm sạch bộ nhớ.")
         else:
             await interaction.response.send_message("❌ Bot đang không ở trong phòng.", ephemeral=True)

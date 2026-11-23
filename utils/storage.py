@@ -30,7 +30,7 @@ class JsonDatabase:
                 await self._save_unlocked()
             else:
                 try:
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
                     content = await loop.run_in_executor(
                         None, lambda: self.file_path.read_text(encoding="utf-8")
                     )
@@ -44,7 +44,7 @@ class JsonDatabase:
     async def _save_unlocked(self):
         """Ghi dữ liệu an toàn kiểu Atomic (Write to temp -> Replace)"""
         temp_file = self.file_path.with_suffix(".tmp")
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def _write():
             with open(temp_file, "w", encoding="utf-8") as f:

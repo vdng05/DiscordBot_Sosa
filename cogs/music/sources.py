@@ -4,13 +4,17 @@ import logging
 
 logger = logging.getLogger("SosaBot.Music.Sources")
 
+# Chỉ cho phép các giao thức và nền tảng an toàn (Chống SSRF / Protocol Injection)
+SAFE_PROTOCOLS = ("http://", "https://")
+
 YTDL_SEARCH_OPTIONS = {
     'format': 'bestaudio/best',
     'extract_flat': 'in_playlist',
     'default_search': 'ytsearch',
     'quiet': True,
     'no_warnings': True,
-    'ignoreerrors': True
+    'ignoreerrors': True,
+    'allowed_extractors': ['youtube', 'soundcloud', 'generic'],
 }
 
 YTDL_STREAM_OPTIONS = {
@@ -18,7 +22,8 @@ YTDL_STREAM_OPTIONS = {
     'quiet': True,
     'noplaylist': True,
     'no_warnings': True,
-    'ignoreerrors': True
+    'ignoreerrors': True,
+    'allowed_extractors': ['youtube', 'soundcloud', 'generic'],
 }
 
 FFMPEG_OPTIONS = {
@@ -27,9 +32,9 @@ FFMPEG_OPTIONS = {
 }
 
 def get_clean_url(entry: dict) -> str | None:
-    """Trích xuất URL sạch từ entry của yt-dlp"""
+    """Trích xuất URL sạch và kiểm tra giao thức an toàn từ entry của yt-dlp"""
     url = entry.get('webpage_url') or entry.get('url')
-    if url and url.startswith('http'):
+    if url and any(url.startswith(proto) for proto in SAFE_PROTOCOLS):
         return url
     if entry.get('id'):
         return f"https://www.youtube.com/watch?v={entry.get('id')}"
@@ -47,10 +52,14 @@ def get_title(entry: dict) -> str:
     return title
 
 def resolve_spotify_link(url: str) -> str | None:
-    """Trích xuất tiêu đề bài hát từ link Spotify để tìm kiếm trên YouTube"""
+    """
+    Trích xuất tiêu đề bài hát từ link Spotify để tìm kiếm trên YouTube.
+    Hàm này thực hiện network I/O đồng bộ nên BẮT BUỘC phải gọi qua asyncio.to_thread
+    """
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
+        with urllib.request.urlopen(req, timeout=5) as response:
+            html = response.read().decode('utf-8')
         title_match = re.search(r'<title>(.+?)</title>', html)
         if title_match:
             title = title_match.group(1)

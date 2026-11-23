@@ -17,7 +17,7 @@ class SetupServer(commands.Cog):
         self.bot = bot
 
     def load_template(self) -> dict:
-        """Đọc template từ file templates.json để người dùng dễ tùy biến"""
+        """Đọc template từ file templates.json"""
         try:
             if TEMPLATE_PATH.exists():
                 with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
@@ -68,66 +68,81 @@ class SetupServer(commands.Cog):
 
         logger.info(f"[{guild.name}] Bắt đầu thực thi /setup-server bởi Owner {interaction.user}")
 
-        # 1. TÙY CHỌN XÓA KÊNH CŨ
+        # 1. TÙY CHỌN XÓA KÊNH CŨ (Có độ trễ tránh Rate Limit 429)
         if clear_old:
-            for channel in guild.channels:
+            for channel in list(guild.channels):
                 if channel.id != interaction.channel_id:
                     try:
-                        await channel.delete()
-                    except discord.HTTPException as e:
+                        await channel.delete(reason="Reset server theo template")
+                        await asyncio.sleep(0.3)  # Giảm tải Discord API Rate Limit
+                    except (discord.NotFound, discord.Forbidden, discord.HTTPException) as e:
                         logger.warning(f"Không thể xóa kênh {channel.name}: {e}")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
         # 2. KHỞI TẠO ROLE CƠ BẢN
         admin_role = discord.utils.get(guild.roles, name="Admin")
         if not admin_role:
-            admin_role = await guild.create_role(
-                name="Admin",
-                permissions=discord.Permissions(administrator=True),
-                color=discord.Color.red()
-            )
+            try:
+                admin_role = await guild.create_role(
+                    name="Admin",
+                    permissions=discord.Permissions(administrator=True),
+                    color=discord.Color.red()
+                )
+            except discord.HTTPException as e:
+                logger.warning(f"Không thể tạo role Admin: {e}")
 
         member_role = discord.utils.get(guild.roles, name="Member")
         if not member_role:
-            member_role = await guild.create_role(
-                name="Member",
-                color=discord.Color.blue()
-            )
+            try:
+                member_role = await guild.create_role(
+                    name="Member",
+                    color=discord.Color.blue()
+                )
+            except discord.HTTPException as e:
+                logger.warning(f"Không thể tạo role Member: {e}")
 
         # 3. ĐỊNH NGHĨA QUYỀN HẠN
         everyone = guild.default_role
+        admin_target = admin_role or everyone
         permission_map = {
             "read_only": {
                 everyone: discord.PermissionOverwrite(read_messages=True, send_messages=False),
-                admin_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+                admin_target: discord.PermissionOverwrite(read_messages=True, send_messages=True)
             },
             "private": {
                 everyone: discord.PermissionOverwrite(read_messages=False, connect=False),
-                admin_role: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True)
+                admin_target: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True)
             },
             "public": {
                 everyone: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True)
             }
         }
 
-        # 4. TỰ ĐỘNG TẠO CATEGORY VÀ KÊNH TỪ TEMPLATE JSON
+        # 4. TỰ ĐỘNG TẠO CATEGORY VÀ KÊNH TỪ TEMPLATE JSON (Có độ trễ chống Rate Limit)
         for cat_name, cat_data in server_template.items():
             perm_type = cat_data.get("permission", "public")
             overwrites = permission_map.get(perm_type, permission_map["public"])
 
-            category = await guild.create_category(name=cat_name, overwrites=overwrites)
-            for ch in cat_data.get("channels", []):
-                if ch["type"] == "text":
-                    await guild.create_text_channel(name=ch["name"], category=category)
-                elif ch["type"] == "voice":
-                    await guild.create_voice_channel(name=ch["name"], category=category)
+            try:
+                category = await guild.create_category(name=cat_name, overwrites=overwrites)
+                await asyncio.sleep(0.3)
+
+                for ch in cat_data.get("channels", []):
+                    if ch["type"] == "text":
+                        await guild.create_text_channel(name=ch["name"], category=category)
+                    elif ch["type"] == "voice":
+                        await guild.create_voice_channel(name=ch["name"], category=category)
+                    await asyncio.sleep(0.3)
+            except discord.HTTPException as e:
+                logger.error(f"Lỗi khi tạo category {cat_name}: {e}")
 
         # 5. THÔNG BÁO HOÀN TẤT
         embed = discord.Embed(
             title="✅ HOÀN TẤT SETUP SERVER",
             description="Bot đã tạo xong toàn bộ cấu trúc từ file mẫu `templates.json`!\n\n"
-                        "**Roles đã tạo:** `Admin`, `Member`\n"
-                        "**Hệ thống quyền:** Đã phân chia khu vực Public và Private thành công.",
+                        "**Roles:** `Admin`, `Member`\n"
+                        "**Hệ thống quyền:** Đã phân chia khu vực Public và Private thành công.\n"
+                        "**Tốc độ xử lý:** Được điều tiết chống Rate Limit Discord.",
             color=discord.Color.green()
         )
         await interaction.followup.send(embed=embed)

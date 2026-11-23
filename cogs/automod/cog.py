@@ -35,8 +35,8 @@ class AutoMod(commands.Cog):
                     delete_after=5
                 )
                 logger.info(f"[{message.guild.name}] Xóa tin nhắn chứa từ cấm từ {message.author}")
-            except discord.Forbidden:
-                logger.warning(f"[{message.guild.name}] Không đủ quyền xóa tin nhắn vi phạm từ cấm.")
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException) as e:
+                logger.warning(f"[{message.guild.name}] Không thể xóa tin nhắn vi phạm từ cấm: {e}")
             return
 
         # 2. LỌC LINK RÁC
@@ -48,11 +48,11 @@ class AutoMod(commands.Cog):
                     delete_after=5
                 )
                 logger.info(f"[{message.guild.name}] Xóa tin nhắn chứa liên kết từ {message.author}")
-            except discord.Forbidden:
-                logger.warning(f"[{message.guild.name}] Không đủ quyền xóa tin nhắn chứa link.")
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException) as e:
+                logger.warning(f"[{message.guild.name}] Không thể xóa tin nhắn chứa link: {e}")
             return
 
-        # 3. CHỐNG SPAM VÀ TỰ ĐỘNG TIMEOUT
+        # 3. CHỐNG SPAM VÀ TỰ ĐỘNG TIMEOUT (Có cơ chế giải phóng bộ nhớ chống rò rỉ RAM)
         user_id = message.author.id
         current_time = time.time()
 
@@ -65,13 +65,19 @@ class AutoMod(commands.Cog):
             if current_time - t <= Config.SPAM_TIME
         ]
 
+        # Giải phóng bộ nhớ nếu user không còn tin nhắn trong khung thời gian
+        if not self.spam_control[user_id]:
+            del self.spam_control[user_id]
+            return
+
         if len(self.spam_control[user_id]) >= Config.SPAM_LIMIT:
             try:
                 await message.delete()
-            except discord.Forbidden:
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                 pass
 
-            self.spam_control[user_id].clear()
+            # Reset ngay lập tức để tránh phạt trùng lặp
+            del self.spam_control[user_id]
 
             try:
                 duration = timedelta(minutes=5)
@@ -80,8 +86,8 @@ class AutoMod(commands.Cog):
                     f"🛑 {message.author.mention} đã bị cấm chat 5 phút do spam!"
                 )
                 logger.info(f"[{message.guild.name}] Đã timeout {message.author} 5 phút do spam.")
-            except discord.Forbidden:
-                logger.warning(f"[{message.guild.name}] Bot thiếu quyền timeout thành viên: {message.author}")
+            except (discord.Forbidden, discord.HTTPException) as e:
+                logger.warning(f"[{message.guild.name}] Không thể timeout {message.author}: {e}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(AutoMod(bot))

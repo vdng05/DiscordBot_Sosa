@@ -42,8 +42,11 @@ class Config:
     DISCORD_TOKEN: str = os.getenv("DISCORD_TOKEN", "")
     COMMAND_PREFIX: str = os.getenv("COMMAND_PREFIX", "!")
 
-    # Security Settings
-    MASTER_KEY: str = os.getenv("SETUP_MASTER_KEY", "ditmemay")
+    # Security Settings (Mã bảo mật cho lệnh cấp cao /setup-server)
+    MASTER_KEY: str = os.getenv("SETUP_MASTER_KEY", "sosa_secure_master_key_2026")
+
+    # TTS Settings (Giới hạn độ dài text để chống DoS)
+    TTS_MAX_LENGTH: int = int(os.getenv("TTS_MAX_LENGTH", "300"))
 
     # AutoMod Settings
     SPAM_LIMIT: int = int(os.getenv("SPAM_LIMIT", "5"))
