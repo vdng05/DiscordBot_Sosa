@@ -1,316 +1,331 @@
 # 🤖 SosaPy — All-in-One Discord Bot
 
 <p align="center">
-  <b>Hệ thống Discord Bot đa chức năng, kiến trúc từng tính năng một thư mục riêng biệt (Feature-Folder Architecture), tích hợp JSON Database siêu nhẹ và an toàn.</b>
+  <b>Hệ thống Discord Bot đa chức năng, kiến trúc từng tính năng một thư mục riêng biệt (Feature-Folder Architecture), tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode) siêu nhẹ và tối ưu cho VPS.</b>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version" />
   <img src="https://img.shields.io/badge/discord.py-v2.3+-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="discord.py" />
   <img src="https://img.shields.io/badge/Architecture-Feature--Folder-success?style=for-the-badge" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Database-JSON%20Storage-orange?style=for-the-badge" alt="Database" />
+  <img src="https://img.shields.io/badge/Database-SQLite%20(WAL%20Mode)-blue?style=for-the-badge" alt="Database" />
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
 </p>
 
 ---
 
 ## 📑 Mục Lục
 - [1. Giới Thiệu Dự Án](#1-giới-thiệu-dự-án)
-- [2. Trả Lời: Có Thể Dùng JSON Thay Thế Database Không?](#2-trả-lời-có-thể-dùng-json-thay-thế-database-không)
-- [3. Kiến Trúc Hệ Thống](#3-kiến-trúc-hệ-thống)
-- [4. Cấu Trúc Thư Mục Chuẩn Hóa (Mỗi Tính Năng 1 Folder)](#4-cấu-trúc-thư-mục-chuẩn-hóa-mỗi-tính-năng-1-folder)
-- [5. Hướng Dẫn Cài Đặt Chi Tiết](#5-hướng-dẫn-cài-đặt-chi-tiết)
+- [2. Kiến Trúc Cơ Sở Dữ Liệu: Vì Sao Dùng SQLite Siêu Nhẹ Trên VPS?](#2-kiến-trúc-cơ-sở-dữ-liệu-vì-sao-dùng-sqlite-siêu-nhẹ-trên-vps)
+- [3. Kiến Trúc Hệ Thống & Tính Năng Nổi Bật](#3-kiến-trúc-hệ-thống--tính-năng-nổi-bật)
+- [4. Cấu Trúc Thư Mục Chuẩn Hóa (Feature-Folder)](#4-cấu-trúc-thư-mục-chuẩn-hóa-feature-folder)
+- [5. Hướng Dẫn Cài Đặt & Triển Khai Toàn Diện](#5-hướng-dẫn-cài-đặt--triển-khai-toàn-diện)
+  - [Cách 1: Chạy trực tiếp (Python trên Windows / Linux)](#cách-1-chạy-trực-tiếp-python-trên-windows--linux)
+  - [Cách 2: Triển khai 1-click bằng Docker trên VPS](#cách-2-triển-khai-1-click-bằng-docker-trên-vps)
 - [6. Cấu Hình Biến Môi Trường (.env)](#6-cấu-hình-biến-môi-trường-env)
-- [7. Hướng Dẫn Sử Dụng & Bảng Lệnh (Slash Commands)](#7-hướng-dẫn-sử-dụng--bảng-lệnh-slash-commands)
-- [8. Cách Sử Dụng JSON Database Trong Mã Nguồn](#8-cách-sử-dụng-json-database-trong-mã-nguồn)
-- [9. Hướng Dẫn Thêm Tính Năng Mới (Tạo Folder Riêng)](#9-hướng-dẫn-thêm-tính-năng-mới-tạo-folder-riêng)
-- [10. Nhật Ký Cập Nhật & Tiến Độ Làm Việc (Worklog & Changelog)](#10-nhật-ký-cập-nhật--tiến-độ-làm-việc-worklog--changelog)
-- [11. Kế Hoạch Phát Triển (Roadmap)](#11-kế-hoạch-phát-triển-roadmap)
+- [7. Hướng Dẫn Sử Dụng & Bảng Lệnh](#7-hướng-dẫn-sử-dụng--bảng-lệnh)
+  - [7.1. Lệnh Quản Trị Hệ Thống Dành Cho Owner (!sync, !reload)](#71-lệnh-quản-trị-hệ-thống-dành-cho-owner-sync-reload)
+  - [7.2. Nhóm Âm Nhạc (Music)](#72-nhóm-âm-nhạc-music)
+  - [7.3. Nhóm Giao Tiếp Voice (TTS)](#73-nhóm-giao-tiếp-voice-tts)
+  - [7.4. Nhóm Thiết Lập Server Bảo Mật Modal (/setup-server)](#74-nhóm-thiết-lập-server-bảo-mật-modal-setup-server)
+  - [7.5. Nhóm Quản Trị Tự Động & Level/Rank (AutoMod)](#75-nhóm-quản-trị-tự-động--levelrank-automod)
+- [8. Cơ Chế Xử Lý Lỗi Tập Trung & Bảo Vệ Tài Nguyên](#8-cơ-chế-xử-lý-lỗi-tập-trung--bảo-vệ-tài-nguyên)
+- [9. Nhật Ký Cập Nhật & Tiến Độ Làm Việc (Worklog & Changelog)](#9-nhật-ký-cập-nhật--tiến-độ-làm-việc-worklog--changelog)
+- [10. Kế Hoạch Phát Triển (Roadmap)](#10-kế-hoạch-phát-triển-roadmap)
 
 ---
 
 ## 1. Giới Thiệu Dự Án
 
-**SosaPy** là một Discord Bot được thiết kế theo kiến trúc **Feature-Folder (Vertical Slice Architecture)**: mỗi tính năng lớn được đóng gói hoàn toàn trong một thư mục riêng biệt (chứa code lệnh, logic nội bộ, class hỗ trợ và dữ liệu mẫu riêng).
+**SosaPy** là một Discord Bot toàn diện được thiết kế theo kiến trúc **Feature-Folder (Vertical Slice Architecture)**: mỗi tính năng lớn được tổ chức độc lập trong một thư mục riêng trong `cogs/`, giúp loại bỏ hoàn toàn sự phụ thuộc chéo và dễ dàng bảo trì, phát triển lâu dài.
 
-Hệ thống cung cấp 4 khối tính năng chính:
-1. **Âm nhạc đa nguồn (Music Engine):** YouTube, SoundCloud, Spotify, tìm kiếm từ khóa, quản lý hàng đợi và tác vụ nền theo từng server.
-2. **Text-To-Speech (TTS tiếng Việt):** Chuyển văn bản thành giọng nói trực tiếp trong phòng thoại bằng Google TTS, tự động dọn dẹp file tạm.
-3. **Quản trị an ninh (AutoMod):** Lọc từ cấm, chặn link rác ngoài danh mục, chống spam tin nhắn liên tục và phạt timeout 5 phút.
-4. **Khởi tạo Server mẫu (Setup Server):** Tự động tạo Categories, Channels, Roles và Phân quyền riêng tư chỉ bằng 1 lệnh từ file template JSON tùy biến.
+Hệ thống cung cấp đầy đủ các chức năng quan trọng nhất cho cộng đồng Discord:
+- **Âm nhạc đa nguồn:** Hỗ trợ YouTube, SoundCloud, Spotify, tự động dọn dẹp hàng đợi và tự rời phòng khi không còn ai nghe.
+- **Voice Text-To-Speech (TTS tiếng Việt):** Đọc văn bản bằng giọng nói Google TTS, tự động điều phối với luồng phát nhạc mà không gây xung đột âm thanh.
+- **Quản trị an ninh thông minh (AutoMod):** Lọc từ cấm, chặn link ngoài có Whitelist kênh nhạc/media, chống spam tin nhắn và tự động phạt timeout.
+- **Hệ thống Level / Rank thời gian thực:** Cộng điểm kinh nghiệm (XP) khi chat hợp lệ và lưu trữ trực tiếp vào SQLite.
+- **Thiết lập Server mẫu bảo mật cao:** Dùng hộp thoại **Discord Modal** ẩn mật khẩu, tự động tạo Category, Channel, Role từ file template JSON với cơ chế chống Rate Limit API.
 
 ---
 
-## 2. Trả Lời: Có Thể Dùng JSON Thay Thế Database Không?
+## 2. Kiến Trúc Cơ Sở Dữ Liệu: Vì Sao Dùng SQLite Siêu Nhẹ Trên VPS?
 
 > [!TIP]
-> **CÂU TRẢ LỜI:** **HOÀN TOÀN CÓ THỂ, VÀ RẤT PHÙ HỢP CHO DỰ ÁN NÀY!**
+> **SQLite có cần cài đặt phức tạp trên VPS không?**
+> **HOÀN TOÀN KHÔNG!** SQLite được tích hợp sẵn 100% trong Python chuẩn. Khi bạn chạy bot trên VPS, bạn **không cần cài MySQL, PostgreSQL, Redis** hay mở bất kỳ cổng mạng (port) nào.
 
-### ✅ Vì sao JSON là lựa chọn tuyệt vời cho bot quy mô vừa và nhỏ?
-- **Siêu nhẹ & Tiện lợi:** Không cần cài đặt MySQL, PostgreSQL, Docker hay cấu hình server database phức tạp.
-- **Dễ chỉnh sửa & Sao lưu:** Dữ liệu nằm ngay trong thư mục `data/` dưới dạng file text `.json`. Bạn có thể mở ra xem, copy backup hoặc sửa tay một cấu hình server bất cứ lúc nào.
-- **Rất phù hợp để lưu:**
-  - Cấu hình server (kênh thông báo, kênh nghe nhạc, prefix).
-  - Danh sách từ cấm riêng theo từng guild.
-  - Template mẫu của server.
-  - Thống kê level / tiền tệ / cảnh báo vi phạm đơn giản.
-
-### ⚠️ Rủi ro cần phòng tránh khi dùng JSON làm Database
-Trong bot Discord, các sự kiện diễn ra **bất đồng bộ (asynchronous)**: Nếu 2 người dùng cùng gõ lệnh ghi dữ liệu vào file JSON cùng một mili-giây, file JSON có thể bị lỗi xung đột ghi đè (**Race Condition**) hoặc bị trắng file (corrupt).
-
-### 🛡️ Giải pháp SosaPy đã tích hợp sẵn: `utils.storage.JsonDatabase`
-Dự án đã xây dựng sẵn module [utils/storage.py](file:///d:/VHD_Files/Tools/Tools/DiscordBot/SosaPy/utils/storage.py) với 2 cơ chế bảo vệ tối cao:
-1. **Async Lock (`asyncio.Lock`):** Đảm bảo tại một thời điểm chỉ có 1 tác vụ được phép ghi file, loại bỏ 100% tình trạng xung đột ghi đè.
-2. **Atomic Write (Ghi nguyên tử):** Dữ liệu được ghi ra một file đệm `.tmp` trước. Sau khi ghi thành công trọn vẹn, hệ thống mới đổi tên thay thế file chính thức. Nếu bot bị cúp điện hay tắt đột ngột, file gốc không bao giờ bị hỏng.
+### Ưu điểm vượt trội của SQLite (`aiosqlite`) so với JSON:
+1. **Không nghẽn Disk I/O:** JSON buộc phải đọc và ghi lại toàn bộ file mỗi lần thay đổi 1 giá trị. SQLite chỉ ghi đúng dòng (row) cần cập nhật.
+2. **Chế độ WAL (Write-Ahead Logging):** Được kích hoạt sẵn qua `PRAGMA journal_mode = WAL;`. Chế độ này cho phép nhiều lệnh đọc và ghi diễn ra đồng thời mà không bao giờ bị lỗi `database is locked`.
+3. **Bảng xếp hạng (Leaderboard) siêu tốc:** SQLite hỗ trợ câu lệnh SQL truy vấn trực tiếp:
+   ```sql
+   SELECT user_id, xp, level FROM user_levels WHERE guild_id = ? ORDER BY xp DESC LIMIT 10;
+   ```
+4. **Vẫn là 1 file duy nhất:** Toàn bộ dữ liệu nằm gọn trong file `data/sosapy.db`. Khi cần sao lưu, bạn chỉ cần copy đúng file này sang máy khác.
 
 ---
 
-## 3. Kiến Trúc Hệ Thống
+## 3. Kiến Trúc Hệ Thống & Tính Năng Nổi Bật
 
 ```mermaid
 flowchart TD
     subgraph Discord_Platform["Discord Gateway"]
-        Events["Tin nhắn / Slash Commands"]
+        Events["Tin nhắn / Slash Commands / Voice State"]
     end
 
     subgraph Core_Engine["Core & Shared Utilities"]
-        Main["main.py (Auto-Loader)"]
-        Config["config.py"]
-        Logger["utils/logger.py"]
-        Storage["utils/storage.py (JsonDatabase)"]
+        Main["main.py (Auto-Loader & Lifecycle)"]
+        Config["config.py (.env Reader)"]
+        Logger["utils/logger.py (Rotating Logs)"]
+        Database["utils/database.py (aiosqlite WAL)"]
+        ErrorHandler["utils/error_handler.py (Global Errors)"]
     end
 
     subgraph Feature_Folders["Feature Modules (cogs/)"]
-        subgraph Music_Module["cogs/music/"]
-            M_Cog["cog.py (Slash Commands)"]
-            M_Player["player.py (Queue Loop)"]
-            M_Src["sources.py (yt-dlp & Spotify)"]
+        subgraph Admin_Module["cogs/admin/"]
+            CmdSync["!sync (On-Demand Sync)"]
+            CmdReload["!reload (Hot Reload Cogs)"]
+            CmdStatus["!botstatus (Resource Monitor)"]
         end
 
-        subgraph Setup_Module["cogs/setup_server/"]
-            S_Cog["cog.py (Slash Command)"]
-            S_Json["templates.json (Template Data)"]
+        subgraph Music_Module["cogs/music/"]
+            M_Cog["cog.py (Slash Commands)"]
+            M_Player["player.py (Loop & Idle Timeout)"]
+            M_Src["sources.py (Secure Protocols)"]
         end
 
         subgraph TTS_Module["cogs/tts/"]
-            T_Cog["cog.py (TTS Engine)"]
+            T_Cog["cog.py (TTS & Audio Coordination)"]
+        end
+
+        subgraph Setup_Module["cogs/setup_server/"]
+            S_Cog["cog.py (Modal Passcode & Rate Limiting)"]
+            S_Json["templates.json (Template Data)"]
         end
 
         subgraph AutoMod_Module["cogs/automod/"]
-            A_Cog["cog.py (Anti-Spam & Filters)"]
+            A_Cog["cog.py (Whitelist & XP Rewards)"]
         end
     end
 
-    subgraph Persistent_Data["Local Data & Storage"]
-        DataDir["data/*.json (Database Files)"]
-        LogsDir["logs/bot.log (History)"]
-        TempDir["temp/*.mp3 (Temporary Audio)"]
+    subgraph Storage_Layer["Persistent Storage"]
+        DBFile["data/sosapy.db (SQLite Database)"]
+        LogsFolder["logs/bot.log (Log File)"]
+        TempFolder["temp/ (Auto-Cleaned Files)"]
     end
 
     Events <--> Main
-    Main --> Config & Logger
+    Main --> Config & Logger & Database & ErrorHandler
     Main --> Feature_Folders
-    Feature_Folders --> Storage
-    Storage <--> DataDir
-    Logger --> LogsDir
-    T_Cog --> TempDir
+    Feature_Folders <--> Database
+    Database <--> DBFile
+    Logger --> LogsFolder
+    T_Cog --> TempFolder
 ```
 
 ---
 
-## 4. Cấu Trúc Thư Mục Chuẩn Hóa (Mỗi Tính Năng 1 Folder)
-
-Dự án hiện tại đã được tách bạch rành mạch 100%:
+## 4. Cấu Trúc Thư Mục Chuẩn Hóa (Feature-Folder)
 
 ```text
 SosaPy/
-├── .env                          # Lưu biến môi trường bí mật (Token, Keys) - KHÔNG ĐẨY LÊN GIT
-├── .env.example                  # Mẫu cấu hình môi trường
-├── .gitignore                    # Loại bỏ cache, file tạm, file database nhạy cảm khỏi Git
-├── config.py                     # Quản lý tập trung toàn bộ cấu hình hệ thống
-├── main.py                       # Khởi chạy bot: tự động nạp mọi thư mục cogs/
-├── requirements.txt              # Danh sách thư viện cần thiết
-├── README.md                     # Tài liệu trung tâm
+├── .env                          # Lưu biến môi trường bí mật (Token, Key) - KHÔNG ĐẨY LÊN GIT
+├── .env.example                  # Mẫu cấu hình môi trường chuẩn
+├── .gitignore                    # Bỏ qua cache, file tạm, file database nhạy cảm
+├── Dockerfile                    # Đóng gói Docker cài sẵn Python 3.12 + FFmpeg cho VPS
+├── docker-compose.yml            # Khởi chạy bot 1-click bằng Docker
+├── config.py                     # Quản lý tập trung cấu hình hệ thống
+├── main.py                       # Khởi chạy: nạp cogs, SQLite, dọn rác temp, error handler
+├── requirements.txt              # Danh sách thư viện (có aiosqlite)
+├── README.md                     # Tài liệu kỹ thuật trung tâm
 │
-├── cogs/                         # THƯ MỤC CÁC CHỨC NĂNG (MỖI CHỨC NĂNG 1 FOLDER)
-│   ├── music/                    # [CHỨC NĂNG 1] HỆ THỐNG NGHE NHẠC
-│   │   ├── __init__.py           # Export hàm nạp cog
-│   │   ├── cog.py                # Các lệnh Slash Command (/play, /pause, /skip...)
-│   │   ├── player.py             # Class MusicPlayer: Quản lý Queue & vòng lặp phát nhạc
-│   │   └── sources.py            # Xử lý luồng âm thanh YouTube, SoundCloud, Spotify
+├── cogs/                         # THƯ MỤC CHỨC NĂNG (MỖI CHỨC NĂNG 1 FOLDER)
+│   ├── admin/                    # [QUẢN TRỊ OWNER] Lệnh !sync, !reload, !botstatus
+│   │   ├── __init__.py
+│   │   └── cog.py
 │   │
-│   ├── setup_server/             # [CHỨC NĂNG 2] THIẾT LẬP MÁY CHỦ MẪU
-│   │   ├── __init__.py           # Export hàm nạp cog
-│   │   ├── cog.py                # Lệnh Slash Command (/setup-server)
-│   │   └── templates.json        # Dữ liệu JSON mô tả các Category, Channel và Quyền hạn
+│   ├── music/                    # [NGHE NHẠC] YouTube, SoundCloud, Spotify
+│   │   ├── __init__.py
+│   │   ├── cog.py                # Lệnh slash, kiểm tra phòng trống tự rời
+│   │   ├── player.py             # Queue loop, đồng bộ ngắt khi có TTS
+│   │   └── sources.py            # yt-dlp và trích xuất Spotify non-blocking
 │   │
-│   ├── tts/                      # [CHỨC NĂNG 3] CHUYỂN VĂN BẢN THÀNH GIỌNG NÓI
-│   │   ├── __init__.py           # Export hàm nạp cog
-│   │   └── cog.py                # Lệnh /speak, tích hợp gTTS và dọn dẹp file tạm
+│   ├── setup_server/             # [SETUP SERVER] Template mẫu và Modal bảo mật
+│   │   ├── __init__.py
+│   │   ├── cog.py                # Hộp thoại Modal nhập mã bảo mật, chống Rate Limit
+│   │   └── templates.json        # Dữ liệu JSON mô tả Category, Channel và Role
 │   │
-│   └── automod/                  # [CHỨC NĂNG 4] TỰ ĐỘNG QUẢN TRỊ SERVER
-│       ├── __init__.py           # Export hàm nạp cog
-│       └── cog.py                # Listener on_message: lọc từ cấm, chặn link, chống spam
+│   ├── tts/                      # [VOICE TTS] Text-To-Speech tiếng Việt
+│   │   ├── __init__.py
+│   │   └── cog.py                # Lệnh /speak, giới hạn 300 ký tự, non-blocking gTTS
+│   │
+│   └── automod/                  # [AUTOMOD & RANK] Lọc từ cấm, link rác, cộng XP
+│       ├── __init__.py
+│       └── cog.py                # Whitelist kênh nhạc, chống rò rỉ RAM, cộng XP SQLite
 │
-├── data/                         # THƯ MỤC CƠ SỞ DỮ LIỆU JSON
-│   └── .gitkeep                  # Lưu các file dữ liệu bot (ví dụ: guild_configs.json)
+├── data/                         # THƯ MỤC CƠ SỞ DỮ LIỆU
+│   └── sosapy.db                 # File SQLite Database đơn giản, siêu nhẹ
 │
-├── utils/                        # CÁC TIỆN ÍCH DÙNG CHUNG TOÀN HỆ THỐNG
+├── utils/                        # TIỆN ÍCH DÙNG CHUNG
 │   ├── __init__.py
+│   ├── database.py               # DatabaseManager quản lý SQLite (aiosqlite WAL)
+│   ├── error_handler.py          # Bộ xử lý lỗi tập trung cho toàn bộ Slash Commands
 │   ├── logger.py                 # Hệ thống ghi log (Console + Rotating File bot.log)
-│   └── storage.py                # Bộ điều khiển JSON Database an toàn (Lock + Atomic)
+│   └── storage.py                # Hỗ trợ đọc/ghi file JSON an toàn (Lock + Atomic)
 │
-├── logs/                         # Lưu trữ file log lịch sử (bot.log)
-└── temp/                         # Chứa file âm thanh .mp3 tạm thời khi đọc TTS
+├── logs/                         # File bot.log xoay vòng tối đa 5MB/file
+└── temp/                         # File âm thanh tạm thời (tự dọn dẹp lúc khởi động)
 ```
 
 ---
 
-## 5. Hướng Dẫn Cài Đặt Chi Tiết
+## 5. Hướng Dẫn Cài Đặt & Triển Khai Toàn Diện
 
-### 1. Yêu cầu tiên quyết
+### Cách 1: Chạy trực tiếp (Python trên Windows / Linux)
+
+#### Bước 1: Chuẩn bị FFmpeg & Python
 - **Python**: Phiên bản 3.10 trở lên (khuyên dùng Python 3.12).
-- **FFmpeg**: Bắt buộc để phát âm thanh trong voice channel ([Hướng dẫn cài FFmpeg Windows](https://www.gyan.dev/ffmpeg/builds/)).
-- **Discord Bot Token**: Lấy tại [Discord Developer Portal](https://discord.com/developers/applications) (nhớ bật đủ 3 Privileged Intents).
+- **FFmpeg**:
+  - *Windows*: Tải từ [gyan.dev FFmpeg](https://www.gyan.dev/ffmpeg/builds/) và thêm vào `Path`.
+  - *Ubuntu/Debian VPS*: `sudo apt update && sudo apt install -y ffmpeg python3-venv python3-pip`
 
-### 2. Cài đặt thư viện
+#### Bước 2: Tạo môi trường ảo & Cài đặt thư viện
 ```bash
 # Tạo môi trường ảo
 python -m venv venv
 
-# Kích hoạt trên Windows PowerShell:
+# Kích hoạt (Windows PowerShell):
 .\venv\Scripts\Activate.ps1
-# Hoặc trên Linux/macOS:
+# Kích hoạt (Linux VPS):
 source venv/bin/activate
 
-# Cài đặt dependencies:
+# Cài đặt thư viện
 pip install -r requirements.txt
 ```
 
-### 3. Cấu hình và chạy
-1. Sao chép `.env.example` thành `.env`:
+#### Bước 3: Cấu hình và Khởi chạy
+1. Sao chép `.env.example` thành `.env` và điền token:
    ```bash
-   cp .env.example .env   # Linux/macOS
-   Copy-Item .env.example .env  # Windows PowerShell
+   cp .env.example .env
    ```
-2. Điền token của bạn vào file `.env`.
-3. Chạy bot:
+2. Khởi chạy bot:
    ```bash
    python main.py
    ```
 
 ---
 
-## 6. Cấu Hình Biến Môi Trường (.env)
+### Cách 2: Triển khai 1-click bằng Docker trên VPS
 
-| Tên biến | Kiểu dữ liệu | Giải thích chi tiết |
-| :--- | :--- | :--- |
-| `DISCORD_TOKEN` | String | Token bảo mật của Bot. |
-| `COMMAND_PREFIX` | String | Tiền tố lệnh (mặc định: `!`). |
-| `SETUP_MASTER_KEY`| String | Mã bảo mật bắt buộc phải nhập khi chạy `/setup-server`. |
-| `BAD_WORDS` | String | Danh sách từ ngữ cấm (cách nhau bởi dấu phẩy `,`). |
-| `SPAM_LIMIT` | Integer | Số tin nhắn tối đa trong khung thời gian quy định (mặc định: `5`). |
-| `SPAM_TIME` | Integer | Khung thời gian kiểm tra spam tính bằng giây (mặc định: `3`). |
-| `LOG_LEVEL` | String | Mức độ log: `INFO`, `DEBUG`, `WARNING`, `ERROR`. |
+Nếu VPS của bạn đã cài sẵn Docker và Docker Compose, bạn không cần phải cài Python hay FFmpeg thủ công:
+
+```bash
+# 1. Clone repository về VPS
+git clone https://github.com/vdng05/DiscordBot_Sosa.git
+cd DiscordBot_Sosa
+
+# 2. Tạo file cấu hình .env
+cp .env.example .env
+nano .env  # Điền DISCORD_TOKEN và OWNER_IDS của bạn
+
+# 3. Khởi chạy container ngầm trong nền
+docker compose up -d --build
+```
+> [!TIP]
+> Container sẽ tự động giữ dữ liệu trong thư mục `./data` và log trong `./logs` ngay trên ổ cứng VPS. Khi reboot VPS, bot sẽ tự động chạy lại nhờ thiết lập `restart: unless-stopped`.
 
 ---
 
-## 7. Hướng Dẫn Sử Dụng & Bảng Lệnh (Slash Commands)
+## 6. Cấu Hình Biến Môi Trường (.env)
 
-### Nhóm Âm Nhạc (`cogs/music/`)
+| Tên biến | Mặc định | Ý nghĩa & Khuyến nghị |
+| :--- | :--- | :--- |
+| `DISCORD_TOKEN` | *(Bắt buộc)* | Token xác thực bot từ Discord Developer Portal. |
+| `OWNER_IDS` | *Rỗng* | ID tài khoản Discord của bạn (để sử dụng lệnh `!sync`, `!reload`). |
+| `COMMAND_PREFIX` | `!` | Tiền tố lệnh quản trị (dành cho các lệnh `!sync`, `!reload`). |
+| `SYNC_ON_STARTUP`| `false` | **Khuyên dùng false**: Không tự động sync khi restart để tránh bị Discord khóa API (Rate Limit). Dùng lệnh `!sync` khi cần. |
+| `SETUP_MASTER_KEY`| `sosa_secure_master_key_2026` | Mã bảo mật cấp cao nhập qua hộp thoại Modal cho `/setup-server`. |
+| `TTS_MAX_LENGTH` | `300` | Giới hạn số lượng ký tự tối đa cho mỗi lần đọc `/speak` (chống spam âm thanh). |
+| `BAD_WORDS` | `từ_cấm_1,toxic` | Danh sách từ cấm ngăn chặn qua AutoMod. |
+| `SPAM_LIMIT` | `5` | Số tin nhắn tối đa gửi trong `SPAM_TIME` giây trước khi bị timeout. |
+| `SPAM_TIME` | `3` | Khung thời gian kiểm tra spam (giây). |
+| `LOG_LEVEL` | `INFO` | Mức độ log: `INFO`, `DEBUG`, `WARNING`, `ERROR`. |
+
+---
+
+## 7. Hướng Dẫn Sử Dụng & Bảng Lệnh
+
+### 7.1. Lệnh Quản Trị Hệ Thống Dành Cho Owner (!sync, !reload)
+*Các lệnh này chỉ có chủ bot (`OWNER_IDS`) mới dùng được, dùng tiền tố prefix (`!`):*
+
+- `!sync guild`: Đồng bộ toàn bộ Slash Commands vào Server hiện tại ngay tức thì (dùng khi thử nghiệm tính năng mới mà không lo dính Rate Limit).
+- `!sync global`: Đồng bộ toàn bộ Slash Commands ra toàn cầu (Discord mất khoảng 1-10 phút để hiển thị trên tất cả server).
+- `!reload <module>`: Tải lại tức thì một module cog (ví dụ: `!reload music` hoặc `!reload automod`) mà không cần tắt bot, không làm gián đoạn phòng nghe nhạc.
+- `!botstatus`: Kiểm tra Ping mạng, mức chiếm dụng RAM (MB), thời gian hoạt động liên tục (Uptime) và trạng thái SQLite.
+
+---
+
+### 7.2. Nhóm Âm Nhạc (Music)
 - `/play <query>`: Phát nhạc từ link YouTube, SoundCloud, Spotify hoặc tìm kiếm từ khóa.
 - `/pause`: Tạm dừng bài hát.
 - `/resume`: Tiếp tục phát nhạc.
-- `/skip`: Chuyển sang bài kế tiếp trong hàng đợi.
-- `/queue`: Hiển thị danh sách phát hiện tại.
-- `/leave`: Rời khỏi phòng thoại và xóa hàng đợi.
-
-### Nhóm Giao Tiếp Voice (`cogs/tts/`)
-- `/speak <text>`: Đọc văn bản tiếng Việt thành giọng nói trong kênh thoại.
-
-### Nhóm Quản Trị Server (`cogs/setup_server/`)
-- `/setup-server <clear_old> <security_code>`: Tự động khởi tạo cấu trúc kênh, role theo file mẫu `templates.json` (chỉ Chủ Server + đúng Master Key mới dùng được).
-
-### Nhóm Tự Động Hóa Chạy Ngầm (`cogs/automod/`)
-- Tự động xóa tin nhắn vi phạm từ ngữ cấm.
-- Tự động chặn và xóa tin nhắn gửi liên kết ngoài.
-- Tự động timeout 5 phút đối với thành viên spam tin nhắn liên tục.
+- `/skip`: Chuyển sang bài kế tiếp trong danh sách chờ.
+- `/queue`: Hiển thị danh sách các bài hát trong hàng đợi.
+- `/leave`: Rời khỏi kênh thoại và làm sạch bộ nhớ.
+- **Tự động tiết kiệm tài nguyên:** Nếu tất cả người dùng rời khỏi phòng (chỉ còn bot) hoặc sau 5 phút không có bài hát mới, bot sẽ tự động ngắt kết nối để giải phóng RAM và CPU.
 
 ---
 
-## 8. Cách Sử Dụng JSON Database Trong Mã Nguồn
-
-Khi bạn muốn lưu trữ dữ liệu (ví dụ: điểm kinh tế, tiền xu, thiết lập riêng của từng server), hãy sử dụng class `JsonDatabase` trong [utils/storage.py](file:///d:/VHD_Files/Tools/Tools/DiscordBot/SosaPy/utils/storage.py):
-
-```python
-from config import Config
-from utils.storage import JsonDatabase
-
-# 1. Khởi tạo database trỏ đến file JSON trong thư mục data/
-# Kèm theo dữ liệu mặc định ban đầu nếu file chưa tồn tại
-db = JsonDatabase(Config.DATA_DIR / "guild_settings.json", default_data={})
-
-# 2. Đọc dữ liệu (Hỗ trợ Cache & Async)
-prefix = await db.get("prefix", default="!")
-
-# 3. Ghi dữ liệu an toàn (Tự động khóa Lock và ghi Atomic)
-await db.set("prefix", "?")
-await db.set(f"welcome_channel_{guild_id}", 123456789)
-
-# 4. Lấy toàn bộ dữ liệu
-all_data = await db.all()
-```
+### 7.3. Nhóm Giao Tiếp Voice (TTS)
+- `/speak <text>`: Chuyển văn bản thành giọng nói tiếng Việt trong kênh thoại (tối đa 300 ký tự).
+- **Điều phối âm thanh thông minh:** Nếu đang phát nhạc, bot sẽ tự động lưu lại bài hát đang nghe dở, đọc thông báo TTS xong rồi mới tiếp tục phát nhạc, không gây xung đột âm thanh `Already playing audio`.
 
 ---
 
-## 9. Hướng Dẫn Thêm Tính Năng Mới (Tạo Folder Riêng)
-
-Nhờ cơ chế **Folder-based Auto-Discovery** trong [main.py](file:///d:/VHD_Files/Tools/Tools/DiscordBot/SosaPy/main.py), bạn chỉ cần:
-
-1. **Tạo thư mục mới** bên trong `cogs/` (ví dụ: `cogs/economy/`).
-2. **Tạo file `cogs/economy/__init__.py`**:
-   ```python
-   from .cog import setup
-   __all__ = ["setup"]
-   ```
-3. **Tạo file `cogs/economy/cog.py`**:
-   ```python
-   import discord
-   from discord.ext import commands
-   from discord import app_commands
-
-   class Economy(commands.Cog):
-       def __init__(self, bot: commands.Bot):
-           self.bot = bot
-
-       @app_commands.command(name="balance", description="Xem số dư xu của bạn")
-       async def balance(self, interaction: discord.Interaction):
-           await interaction.response.send_message("💰 Số dư của bạn: 1,000 Xu")
-
-   async def setup(bot: commands.Bot):
-       await bot.add_cog(Economy(bot))
-   ```
-4. Khởi động lại bot. Bot sẽ tự động quét thấy thư mục `cogs.economy` và đồng bộ lệnh ngay lập tức!
+### 7.4. Nhóm Thiết Lập Server Bảo Mật Modal (/setup-server)
+- `/setup-server [clear_old]`: Bật hộp thoại **Discord Modal** bí mật yêu cầu nhập `Master Key`.
+- **An toàn tuyệt đối:** Mã bảo mật không hiển thị trên khung chat Discord.
+- **Chống Rate Limit:** Quá trình xóa và tạo Category/Channel có độ trễ 0.3s đảm bảo không bị lỗi dở dang do Discord giới hạn tần suất tạo phòng.
 
 ---
 
-## 10. Nhật Ký Cập Nhật & Tiến Độ Làm Việc (Worklog & Changelog)
+### 7.5. Nhóm Quản Trị Tự Động & Level/Rank (AutoMod)
+- **Lọc từ cấm:** Tự động xóa tin nhắn vi phạm và nhắc nhở 5s.
+- **Lọc link có Whitelist:** Chặn các liên kết ngoài, nhưng cho phép gửi link YouTube/SoundCloud/Spotify trong các kênh âm nhạc hoặc media.
+- **Chống Spam:** Tự động phát hiện spam và phạt timeout 5 phút, tự động giải phóng bộ nhớ RAM.
+- **Tích hợp Level / Rank thời gian thực:** Mỗi tin nhắn hợp lệ sẽ được cộng điểm XP vào SQLite. Khi đủ điểm, bot sẽ gửi thông báo chúc mừng thăng cấp.
+
+---
+
+## 8. Cơ Chế Xử Lý Lỗi Tập Trung & Bảo Vệ Tài Nguyên
+
+1. **Bộ xử lý lỗi tập trung ([./utils/error_handler.py](./utils/error_handler.py)):**
+   - Mọi lỗi phát sinh từ Slash Commands (thiếu quyền, lệnh đang cooldown, lỗi ngoại lệ) đều được hiển thị bằng Embed Discord thân thiện kèm mã định danh lỗi (`Error ID`) thay vì thông báo vô nghĩa *"The application did not respond"*.
+2. **Khởi động sạch sẽ (Lifecycle Management):**
+   - Mỗi lần khởi động, bot tự động quét và xóa sạch các file âm thanh `.mp3` hoặc file đệm `.tmp` còn sót lại trong thư mục `temp/`.
+3. **Đóng tài nguyên an toàn (Graceful Shutdown):**
+   - Khi nhận tín hiệu dừng (Ctrl+C hoặc tắt container), bot tự động ngắt kết nối Voice, giải phóng FFmpeg và đóng kết nối cơ sở dữ liệu SQLite an toàn.
+
+---
+
+## 9. Nhật Ký Cập Nhật & Tiến Độ Làm Việc (Worklog & Changelog)
 
 | Phiên bản | Ngày cập nhật | Người thực hiện | Nội dung chi tiết |
 | :---: | :---: | :---: | :--- |
-| **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:**<br>• Đồng bộ hóa Voice giữa TTS và Music, chống lỗi `ClientException: Already playing audio`.<br>• Chuyển các tác vụ I/O đồng bộ (Spotify metadata, gTTS save) sang `asyncio.to_thread` chống nghẽn Event Loop.<br>• Vá lỗ hổng DoS TTS bằng cách giới hạn ký tự tối đa `TTS_MAX_LENGTH=300`.<br>• Khắc phục rò rỉ bộ nhớ (Memory Leak) trong dictionary chống spam của AutoMod.<br>• Chống bão request Discord Rate Limit (HTTP 429) trong lệnh `/setup-server`.<br>• Chống bắt cóc bot giữa các kênh thoại khi đang có người nghe. |
-| **v1.2.0** | 2026-11-23 | Antigravity & User | **Tái cấu trúc Feature-Folder & Tích hợp JSON Database:**<br>• Tách mỗi tính năng thành 1 folder riêng trong `cogs/` (`music/`, `setup_server/`, `tts/`, `automod/`).<br>• Tách `player.py` và `sources.py` trong module Music giúp code gọn gàng, rành mạch.<br>• Tách cấu trúc Server thành file riêng `cogs/setup_server/templates.json`.<br>• Xây dựng module `utils/storage.py` (`JsonDatabase`) với Async Lock và Atomic Write.<br>• Nâng cấp `main.py` tự động quét cả Folder Cogs và File Cogs.<br>• Cập nhật toàn bộ tài liệu hướng dẫn `README.md`. |
-| **v1.1.0** | 2026-11-23 | Antigravity & User | **Chuẩn hóa Enterprise Architecture:** Tách `.env`, `config.py`, `utils/logger.py`, `.gitignore`, `requirements.txt`. |
-| **v1.0.0** | 2026-07-10 | User | **Khởi tạo dự án ban đầu:** 4 cogs phẳng cơ bản (`music.py`, `tts.py`, `automod.py`, `setup.py`). |
+| **v1.4.0** | 2026-11-23 | Antigravity & User | **Nâng cấp Hệ thống Toàn diện & Tích hợp SQLite:**<br>• Tích hợp SQLite bất đồng bộ (`aiosqlite`) với chế độ WAL Mode siêu nhẹ, tối ưu cho VPS.<br>• Tích hợp hệ thống Level / Rank thời gian thực lưu trong SQLite.<br>• Xây dựng `cogs/admin/` với lệnh `!sync` (chống Rate Limit restart), `!reload` (hot reload) và `!botstatus`.<br>• Bảo mật `/setup-server` bằng hộp thoại Discord Modal ẩn mật khẩu.<br>• Thêm bộ xử lý lỗi tập trung `utils/error_handler.py` hiển thị Embed kèm Error ID.<br>• Bổ sung tính năng tự thoát phòng khi không còn người nghe (`on_voice_state_update`).<br>• Thêm Whitelist kênh nhạc/media trong AutoMod.<br>• Tự dọn dẹp file rác trong `temp/` khi khởi động.<br>• Thêm `Dockerfile` và `docker-compose.yml` cho VPS.<br>• Chuyển đổi toàn bộ link trong tài liệu sang relative markdown links. |
+| **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:** Đồng bộ hóa Voice giữa TTS và Music, chuyển I/O sang `asyncio.to_thread`, giới hạn ký tự TTS 300 ký tự. |
+| **v1.2.0** | 2026-11-23 | Antigravity & User | **Tái cấu trúc Feature-Folder:** Tách mỗi tính năng thành 1 folder riêng trong `cogs/`. |
+| **v1.1.0** | 2026-11-23 | Antigravity & User | **Chuẩn hóa Enterprise Architecture:** Tách `.env`, `config.py`, `utils/logger.py`. |
+| **v1.0.0** | 2026-07-10 | User | **Khởi tạo dự án ban đầu:** 4 cogs phẳng cơ bản. |
 
 ---
 
-## 11. Kế Hoạch Phát Triển (Roadmap)
+## 10. Kế Hoạch Phát Triển (Roadmap)
 
-- [ ] **Lưu trữ cấu hình Guild vào JSON Database:** Cho phép mỗi server tự chỉnh prefix, bật/tắt AutoMod riêng biệt qua `data/guild_configs.json`.
-- [ ] **Interactive Buttons cho Music:** Thêm hàng nút Pause, Skip, Stop dưới bài hát đang phát.
+- [ ] **Lệnh xem bảng xếp hạng `/leaderboard`:** Hiển thị top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server từ SQLite.
+- [ ] **Interactive Buttons cho Music:** Thêm hàng nút Pause, Resume, Skip, Stop trực tiếp dưới tin nhắn phản hồi của `/play`.
 - [ ] **Hệ thống Welcome Banner:** Tạo ảnh thẻ chào mừng tự động lưu ảnh tạm trong `temp/`.
 - [ ] **Hệ thống Ticket:** Mở kênh chat riêng với Ban Quản Trị bằng Discord Button.
-- [ ] **Hệ thống Level / Rank:** Tính điểm kinh nghiệm chat lưu trực tiếp bằng `JsonDatabase`.
 
 ---
 

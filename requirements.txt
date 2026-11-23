@@ -12,3 +12,6 @@ gTTS>=2.5.0
 
 # Quản lý cấu hình & biến môi trường từ file .env
 python-dotenv>=1.0.0
+
+# Cơ sở dữ liệu SQLite bất đồng bộ siêu nhẹ (File đơn data/sosapy.db)
+aiosqlite>=0.20.0

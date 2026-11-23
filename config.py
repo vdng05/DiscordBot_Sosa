@@ -38,9 +38,20 @@ class Config:
     TEMP_DIR: Path = BASE_DIR / "temp"
     LOGS_DIR: Path = BASE_DIR / "logs"
 
+    # SQLite Database Path (File đơn siêu nhẹ trên VPS)
+    DB_PATH: Path = DATA_DIR / "sosapy.db"
+
     # Discord Bot Settings
     DISCORD_TOKEN: str = os.getenv("DISCORD_TOKEN", "")
     COMMAND_PREFIX: str = os.getenv("COMMAND_PREFIX", "!")
+    OWNER_IDS: list[int] = [
+        int(uid.strip())
+        for uid in os.getenv("OWNER_IDS", "").split(",")
+        if uid.strip().isdigit()
+    ]
+
+    # Cơ chế Sync lệnh: Mặc định tắt tự động sync khi restart để chống Rate Limit Discord
+    SYNC_ON_STARTUP: bool = os.getenv("SYNC_ON_STARTUP", "false").lower() in ("true", "1", "yes")
 
     # Security Settings (Mã bảo mật cho lệnh cấp cao /setup-server)
     MASTER_KEY: str = os.getenv("SETUP_MASTER_KEY", "sosa_secure_master_key_2026")

@@ -13,6 +13,14 @@ ENV/
 # Configuration & Secrets (RẤT QUAN TRỌNG - KHÔNG ĐƯỢC COMMIT)
 .env
 
+# Database Files
+*.db
+*.db-shm
+*.db-wal
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
 # Logs
 logs/
 *.log

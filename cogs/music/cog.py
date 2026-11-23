@@ -168,5 +168,29 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("❌ Bot đang không ở trong phòng.", ephemeral=True)
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        """Nếu tất cả người dùng rời phòng (chỉ còn lại bot), tự động ngắt kết nối để giải phóng RAM/FFmpeg"""
+        if member.bot:
+            return
+
+        if before.channel and (not after.channel or before.channel != after.channel):
+            guild = before.channel.guild
+            vc = guild.voice_client
+
+            if vc and vc.channel == before.channel:
+                non_bot_members = [m for m in before.channel.members if not m.bot]
+                if len(non_bot_members) == 0:
+                    logger.info(f"[{guild.name}] Mọi người đã rời phòng thoại. Tự động thoát để tiết kiệm tài nguyên.")
+                    if guild.id in self.players:
+                        player = self.players[guild.id]
+                        player.queue.clear()
+                        player.audio_player_task.cancel()
+                        del self.players[guild.id]
+                    try:
+                        await vc.disconnect()
+                    except Exception:
+                        pass
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Music(bot))

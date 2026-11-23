@@ -1,0 +1,11 @@
+services:
+  sosapy:
+    build: .
+    container_name: sosapy_bot
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - PYTHONUNBUFFERED=1
