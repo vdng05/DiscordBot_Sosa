@@ -6,12 +6,33 @@ import time
 
 logger = logging.getLogger("SosaBot.Database")
 
+# Định nghĩa các bậc nhẫn cưới (Ring Tiers) dựa trên điểm thân mật
+RING_TIERS = {
+    1: {"name": "Nhẫn Cỏ Thần Tiên 🌿", "min_points": 0, "color": 0x85E3B3, "desc": "Mộc mạc, ngọt ngào những ngày đầu mới về chung nhà."},
+    2: {"name": "Nhẫn Bạc Thuần Khiết 🪙", "min_points": 50, "color": 0xC0C0C0, "desc": "Tình cảm bắt đầu gắn kết và thấu hiểu lẫn nhau."},
+    3: {"name": "Nhẫn Vàng Vương Giả 👑", "min_points": 150, "color": 0xFFD700, "desc": "Tình yêu chín muồi, rực rỡ và bền chặt như kim loại quý."},
+    4: {"name": "Nhẫn Kim Cương Vĩnh Cửu 💎", "min_points": 300, "color": 0x7DF9FF, "desc": "Tình cảm kiên cố, không bão giông nào có thể chia lìa."},
+    5: {"name": "Nhẫn Vô Cực Ngân Hà 🌌", "min_points": 500, "color": 0xE0B0FF, "desc": "Tình yêu huyền thoại vượt qua thời gian và không gian!"}
+}
+
+def calculate_ring_tier(points: int) -> int:
+    """Xác định cấp bậc nhẫn dựa trên điểm thân mật"""
+    if points >= 500:
+        return 5
+    elif points >= 300:
+        return 4
+    elif points >= 150:
+        return 3
+    elif points >= 50:
+        return 2
+    return 1
+
+
 class DatabaseManager:
     """
     Quản lý SQLite bất đồng bộ (aiosqlite) siêu nhẹ và tối ưu cho VPS:
     - Bật chế độ WAL (Write-Ahead Logging) cho phép đọc và ghi song song không nghẽn.
-    - Lưu toàn bộ dữ liệu trong 1 file đơn giản (data/sosapy.db).
-    - Mặc định TẮT tất cả các tính năng tự động (AutoMod, Level/XP) khi bot vào server mới.
+    - Hỗ trợ các bảng: cấu hình guild, level/rank, mod logs, kết hôn & nhà cặp đôi (marriages).
     """
 
     def __init__(self, db_path: Path):
@@ -23,7 +44,6 @@ class DatabaseManager:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._db = await aiosqlite.connect(self.db_path)
 
-        # Bật chế độ WAL và tối ưu hóa hiệu năng I/O trên máy chủ
         await self._db.execute("PRAGMA journal_mode = WAL;")
         await self._db.execute("PRAGMA synchronous = NORMAL;")
         await self._db.execute("PRAGMA foreign_keys = ON;")
@@ -41,13 +61,13 @@ class DatabaseManager:
             );
         """)
 
-        # Migration an toàn nếu bảng cũ chưa có cột level_system_enabled
+        # Migration an toàn
         try:
             await self._db.execute("ALTER TABLE guild_settings ADD COLUMN level_system_enabled INTEGER DEFAULT 0;")
         except Exception:
-            pass  # Cột đã tồn tại
+            pass
 
-        # 2. Bảng Hệ thống Level / Rank (kinh nghiệm chat)
+        # 2. Bảng Hệ thống Level / Rank
         await self._db.execute("""
             CREATE TABLE IF NOT EXISTS user_levels (
                 guild_id TEXT NOT NULL,
@@ -71,6 +91,29 @@ class DatabaseManager:
             );
         """)
 
+        # 4. Bảng Kết Hôn & Ngôi Nhà Cặp Đôi (Marry System)
+        await self._db.execute("""
+            CREATE TABLE IF NOT EXISTS marriages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id TEXT NOT NULL,
+                user1_id TEXT NOT NULL,
+                user2_id TEXT NOT NULL,
+                house_name TEXT DEFAULT 'Ngôi Nhà Hạnh Phúc',
+                quote TEXT DEFAULT 'Bên nhau trọn đời 💕',
+                intimacy_points INTEGER DEFAULT 0,
+                ring_tier INTEGER DEFAULT 1,
+                married_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                gallery_slot_1 TEXT,
+                gallery_slot_2 TEXT,
+                gallery_slot_3 TEXT,
+                gallery_slot_4 TEXT,
+                gallery_slot_5 TEXT,
+                gallery_slot_6 TEXT,
+                background_url TEXT,
+                last_interaction_time REAL DEFAULT 0
+            );
+        """)
+
         await self._db.commit()
         logger.info(f"Đã kết nối và khởi tạo cơ sở dữ liệu SQLite tại: {self.db_path}")
 
@@ -91,10 +134,9 @@ class DatabaseManager:
             ON CONFLICT(guild_id) DO NOTHING;
         """, (str(guild_id),))
         await self._db.commit()
-        logger.info(f"Đã đăng ký server {guild_id} vào Database (Tính năng tự động: Mặc định TẮT).")
 
     async def get_guild_settings(self, guild_id: int) -> Dict[str, Any]:
-        """Lấy toàn bộ thiết lập của một guild (Nếu chưa có trong DB, trả về mặc định TẮT)"""
+        """Lấy toàn bộ thiết lập của một guild"""
         async with self._db.execute(
             "SELECT prefix, welcome_channel_id, music_channel_id, automod_enabled, level_system_enabled FROM guild_settings WHERE guild_id = ?",
             (str(guild_id),)
@@ -173,6 +215,31 @@ class DatabaseManager:
             await self._db.commit()
             return False, xp_to_add, 1
 
+    async def get_user_rank(self, guild_id: int, user_id: int) -> Tuple[int, int, int]:
+        """Lấy thứ hạng (rank), XP và level của người dùng trong server"""
+        gid = str(guild_id)
+        uid = str(user_id)
+
+        # Lấy thông tin XP của user
+        async with self._db.execute(
+            "SELECT xp, level FROM user_levels WHERE guild_id = ? AND user_id = ?",
+            (gid, uid)
+        ) as cursor:
+            row = await cursor.fetchone()
+
+        if not row:
+            return 1, 0, 1
+
+        xp, level = row
+        # Tính số người có XP cao hơn user này
+        async with self._db.execute(
+            "SELECT COUNT(*) FROM user_levels WHERE guild_id = ? AND xp > ?",
+            (gid, xp)
+        ) as cursor:
+            rank_above = (await cursor.fetchone())[0]
+
+        return rank_above + 1, xp, level
+
     async def get_leaderboard(self, guild_id: int, limit: int = 10) -> List[Tuple[str, int, int]]:
         """Lấy bảng xếp hạng Level trong Guild với tốc độ siêu nhanh"""
         async with self._db.execute("""
@@ -183,6 +250,155 @@ class DatabaseManager:
             LIMIT ?;
         """, (str(guild_id), limit)) as cursor:
             return await cursor.fetchall()
+
+    # ==========================
+    # HỆ THỐNG KẾT HÔN & NHÀ CẶP ĐÔI (MARRY)
+    # ==========================
+    async def get_marriage(self, guild_id: int, user_id: int) -> Optional[Dict[str, Any]]:
+        """Lấy thông tin hôn nhân của một người dùng trong Server"""
+        gid = str(guild_id)
+        uid = str(user_id)
+
+        async with self._db.execute("""
+            SELECT id, user1_id, user2_id, house_name, quote, intimacy_points, ring_tier, 
+                   married_at, gallery_slot_1, gallery_slot_2, gallery_slot_3, 
+                   gallery_slot_4, gallery_slot_5, gallery_slot_6, background_url, last_interaction_time
+            FROM marriages
+            WHERE guild_id = ? AND (user1_id = ? OR user2_id = ?)
+        """, (gid, uid, uid)) as cursor:
+            row = await cursor.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "id": row[0],
+            "user1_id": row[1],
+            "user2_id": row[2],
+            "partner_id": row[2] if row[1] == uid else row[1],
+            "house_name": row[3] or "Ngôi Nhà Hạnh Phúc",
+            "quote": row[4] or "Bên nhau trọn đời 💕",
+            "intimacy_points": row[5] or 0,
+            "ring_tier": row[6] or 1,
+            "married_at": row[7],
+            "gallery": [row[8], row[9], row[10], row[11], row[12], row[13]],
+            "background_url": row[14],
+            "last_interaction_time": row[15] or 0
+        }
+
+    async def create_marriage(self, guild_id: int, user1_id: int, user2_id: int) -> bool:
+        """Tạo mối quan hệ hôn nhân mới giữa 2 người dùng"""
+        gid = str(guild_id)
+        u1 = str(user1_id)
+        u2 = str(user2_id)
+
+        # Kiểm tra xem một trong hai người đã cưới ai khác trong server chưa
+        existing1 = await self.get_marriage(guild_id, user1_id)
+        existing2 = await self.get_marriage(guild_id, user2_id)
+        if existing1 or existing2:
+            return False
+
+        await self._db.execute("""
+            INSERT INTO marriages (guild_id, user1_id, user2_id, ring_tier, intimacy_points)
+            VALUES (?, ?, ?, 1, 0);
+        """, (gid, u1, u2))
+        await self._db.commit()
+        return True
+
+    async def update_house_name(self, guild_id: int, user_id: int, new_name: str) -> bool:
+        """Đổi tên ngôi nhà marry"""
+        marriage = await self.get_marriage(guild_id, user_id)
+        if not marriage:
+            return False
+
+        await self._db.execute(
+            "UPDATE marriages SET house_name = ? WHERE id = ?",
+            (new_name, marriage["id"])
+        )
+        await self._db.commit()
+        return True
+
+    async def update_house_quote(self, guild_id: int, user_id: int, new_quote: str) -> bool:
+        """Đổi câu trích dẫn/châm ngôn của ngôi nhà marry"""
+        marriage = await self.get_marriage(guild_id, user_id)
+        if not marriage:
+            return False
+
+        await self._db.execute(
+            "UPDATE marriages SET quote = ? WHERE id = ?",
+            (new_quote, marriage["id"])
+        )
+        await self._db.commit()
+        return True
+
+    async def update_gallery_slot(self, guild_id: int, user_id: int, slot: int, url: str) -> bool:
+        """Cập nhật ảnh vào 1 trong 6 vị trí của thư viện (slot 1-6)"""
+        if slot < 1 or slot > 6:
+            return False
+
+        marriage = await self.get_marriage(guild_id, user_id)
+        if not marriage:
+            return False
+
+        col_name = f"gallery_slot_{slot}"
+        await self._db.execute(
+            f"UPDATE marriages SET {col_name} = ? WHERE id = ?",
+            (url, marriage["id"])
+        )
+        await self._db.commit()
+        return True
+
+    async def update_house_background(self, guild_id: int, user_id: int, background_url: str) -> bool:
+        """Cập nhật ảnh nền cho thư viện ảnh"""
+        marriage = await self.get_marriage(guild_id, user_id)
+        if not marriage:
+            return False
+
+        await self._db.execute(
+            "UPDATE marriages SET background_url = ? WHERE id = ?",
+            (background_url, marriage["id"])
+        )
+        await self._db.commit()
+        return True
+
+    async def add_intimacy(self, guild_id: int, user_id: int, points: int = 10, cooldown_seconds: float = 30.0) -> Tuple[bool, int, int, bool]:
+        """
+        Cộng điểm thân mật khi tương tác với người bạn đời (kiss, hug, pat, slap).
+        Trả về: (success, new_points, ring_tier, tier_up)
+        """
+        marriage = await self.get_marriage(guild_id, user_id)
+        if not marriage:
+            return False, 0, 1, False
+
+        now = time.time()
+        last_time = marriage["last_interaction_time"]
+
+        if now - last_time < cooldown_seconds:
+            return False, marriage["intimacy_points"], marriage["ring_tier"], False
+
+        old_tier = marriage["ring_tier"]
+        new_points = marriage["intimacy_points"] + points
+        new_tier = calculate_ring_tier(new_points)
+        tier_up = new_tier > old_tier
+
+        await self._db.execute("""
+            UPDATE marriages 
+            SET intimacy_points = ?, ring_tier = ?, last_interaction_time = ?
+            WHERE id = ?;
+        """, (new_points, new_tier, now, marriage["id"]))
+        await self._db.commit()
+
+        return True, new_points, new_tier, tier_up
+
+    async def divorce(self, guild_id: int, user_id: int) -> bool:
+        """Hủy bỏ mối quan hệ hôn nhân (Ly hôn)"""
+        marriage = await self.get_marriage(guild_id, user_id)
+        if not marriage:
+            return False
+
+        await self._db.execute("DELETE FROM marriages WHERE id = ?", (marriage["id"],))
+        await self._db.commit()
+        return True
 
     # ==========================
     # NHẬT KÝ QUẢN TRỊ (MOD LOGS)

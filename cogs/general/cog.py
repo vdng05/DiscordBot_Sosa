@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import logging
+from utils.canvas import draw_rank_card
 
 logger = logging.getLogger("SosaBot.General")
 
@@ -136,8 +137,31 @@ class General(commands.Cog):
         embed.add_field(
             name="⭐ Cấp Độ & Bảng Xếp Hạng (Level & Rank)",
             value=(
-                "• `/rank [member]`: Xem cấp độ (Level) và điểm kinh nghiệm (XP) hiện tại\n"
+                "• `/rank [member]` (hoặc `!rank`): Xem Thẻ Rank đồ họa cá nhân cực xịn\n"
                 "• `/leaderboard`: Xem Bảng vàng Top 10 thành viên năng nổ nhất server"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="💘 Bói Tình Duyên & Cặp Đôi (Love & Marry)",
+            value=(
+                "• `/lovec <target>` (hoặc `!lovec`): Đo độ hợp nhau (hỗ trợ `random` ghép đôi ngẫu nhiên)\n"
+                "• `/marry <@user>` (hoặc `!marry`): Cầu hôn thành viên khác\n"
+                "• `/marry`: Mở Ngôi Nhà Cặp Đôi tương tác (Trang chủ, Album ảnh, Ghi chú)\n"
+                "• `/marry_name <tên>` (hoặc `!name`): Đổi tên ngôi nhà\n"
+                "• `/marry_quote <nội dung>` (hoặc `!quote`): Đổi châm ngôn tình yêu\n"
+                "• `/lgallery <1-6> <link>` (hoặc `!lgallery`): Thêm ảnh vào album kỷ niệm\n"
+                "• `/divorce` (hoặc `!divorce`): Ly hôn giải phóng ngôi nhà"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="✨ Tương Tác Thân Mật (Tăng Điểm Nhẫn Cưới)",
+            value=(
+                "• `/kiss`, `/hug`, `/pat`, `/slap` (hoặc `!kiss`, `!hug`...):\n"
+                "  Tương tác với người ấy để nhận +10 Điểm thân mật & nâng cấp Nhẫn Cưới"
             ),
             inline=False
         )
@@ -168,42 +192,71 @@ class General(commands.Cog):
 
     @app_commands.command(
         name="rank",
-        description="Xem cấp độ (Level) và điểm kinh nghiệm (XP) hiện tại của bạn hoặc thành viên khác"
+        description="Xem Thẻ Rank đồ họa cực chất hiển thị Level, XP và thứ hạng của bạn hoặc người khác"
     )
     @app_commands.describe(
         member="Chọn thành viên bạn muốn xem cấp độ (để trống nếu muốn xem chính mình)"
     )
     async def rank_command(self, interaction: discord.Interaction, member: discord.Member = None):
+        await interaction.response.defer()
         target = member or interaction.user
         guild_id = interaction.guild.id
         user_id = target.id
 
-        async with self.bot.db._db.execute(
-            "SELECT xp, level FROM user_levels WHERE guild_id = ? AND user_id = ?",
-            (str(guild_id), str(user_id))
-        ) as cursor:
-            row = await cursor.fetchone()
-
-        if row:
-            xp, level = row
-        else:
-            xp, level = 0, 1
-
+        rank_pos, xp, level = await self.bot.db.get_user_rank(guild_id, user_id)
         needed_xp = int(100 * (level ** 1.5))
-        progress = min(int((xp / needed_xp) * 10), 10) if needed_xp > 0 else 0
-        progress_bar = "▰" * progress + "▱" * (10 - progress)
 
-        embed = discord.Embed(
-            title=f"⭐ HỒ SƠ CẤP ĐỘ — {target.display_name}",
-            color=discord.Color.gold()
-        )
-        embed.set_thumbnail(url=target.display_avatar.url)
-        embed.add_field(name="Cấp Độ (Level)", value=f"🏆 **Cấp {level}**", inline=True)
-        embed.add_field(name="Kinh Nghiệm (XP)", value=f"✨ **{xp:,}** / {needed_xp:,} XP", inline=True)
-        embed.add_field(name="Tiến Trình Thăng Cấp", value=f"`[{progress_bar}]` ({int(xp/needed_xp*100) if needed_xp else 0}%)", inline=False)
-        embed.set_footer(text="Chat thường xuyên trong server để tích lũy thêm điểm kinh nghiệm!")
+        try:
+            image_buf = await draw_rank_card(
+                avatar_url=target.display_avatar.url,
+                username=target.display_name,
+                level=level,
+                current_xp=xp,
+                needed_xp=needed_xp,
+                rank_num=rank_pos
+            )
+            file = discord.File(fp=image_buf, filename=f"rank_{target.id}.png")
+            await interaction.followup.send(file=file)
+        except Exception as e:
+            logger.error(f"Lỗi khi vẽ Thẻ Rank: {e}", exc_info=True)
+            # Fallback sang Embed nếu lỗi đồ họa
+            embed = discord.Embed(
+                title=f"⭐ HỒ SƠ CẤP ĐỘ — {target.display_name}",
+                description=f"Thứ hạng: **#{rank_pos}** | Cấp độ: **{level}** | XP: **{xp:,}** / {needed_xp:,}",
+                color=discord.Color.gold()
+            )
+            embed.set_thumbnail(url=target.display_avatar.url)
+            await interaction.followup.send(embed=embed)
 
-        await interaction.response.send_message(embed=embed)
+    @commands.command(name="rank", description="Xem Thẻ Rank đồ họa (!rank [@member])")
+    async def rank_prefix(self, ctx: commands.Context, member: discord.Member = None):
+        target = member or ctx.author
+        guild_id = ctx.guild.id
+        user_id = target.id
+
+        rank_pos, xp, level = await self.bot.db.get_user_rank(guild_id, user_id)
+        needed_xp = int(100 * (level ** 1.5))
+
+        try:
+            image_buf = await draw_rank_card(
+                avatar_url=target.display_avatar.url,
+                username=target.display_name,
+                level=level,
+                current_xp=xp,
+                needed_xp=needed_xp,
+                rank_num=rank_pos
+            )
+            file = discord.File(fp=image_buf, filename=f"rank_{target.id}.png")
+            await ctx.reply(file=file, mention_author=False)
+        except Exception as e:
+            logger.error(f"Lỗi khi vẽ Thẻ Rank: {e}", exc_info=True)
+            embed = discord.Embed(
+                title=f"⭐ HỒ SƠ CẤP ĐỘ — {target.display_name}",
+                description=f"Thứ hạng: **#{rank_pos}** | Cấp độ: **{level}** | XP: **{xp:,}** / {needed_xp:,}",
+                color=discord.Color.gold()
+            )
+            embed.set_thumbnail(url=target.display_avatar.url)
+            await ctx.reply(embed=embed, mention_author=False)
 
     @app_commands.command(
         name="leaderboard",

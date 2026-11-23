@@ -16,19 +16,22 @@
 
 ## 📑 Mục Lục
 - [1. Giới Thiệu Dự Án](#1-giới-thiệu-dự-án)
-- [2. Kiến Trúc Cơ Sở Dữ Liệu: Vì Sao Dùng SQLite Siêu Nhẹ Trên VPS?](#2-kiến-trúc-cơ-sở-dữ-liệu-vì-sao-dùng-sqlite-siêu-nhẹ-trên-vps)
+- [2. Kiến Trúc Cơ Sở Dữ Liệu & Triển Khai: SQLite vs Docker](#2-kiến-trúc-cơ-sở-dữ-liệu--triển-khai-sqlite-vs-docker)
 - [3. Kiến Trúc Hệ Thống & Tính Năng Nổi Bật](#3-kiến-trúc-hệ-thống--tính-năng-nổi-bật)
 - [4. Cấu Trúc Thư Mục Chuẩn Hóa (Feature-Folder)](#4-cấu-trúc-thư-mục-chuẩn-hóa-feature-folder)
 - [5. Hướng Dẫn Cài Đặt & Triển Khai Toàn Diện](#5-hướng-dẫn-cài-đặt--triển-khai-toàn-diện)
-  - [Cách 1: Chạy trực tiếp (Python trên Windows / Linux)](#cách-1-chạy-trực-tiếp-python-trên-windows--linux)
-  - [Cách 2: Triển khai 1-click bằng Docker trên VPS](#cách-2-triển-khai-1-click-bằng-docker-trên-vps)
+  - [Cách 1: Chạy trực tiếp (Python trên Windows / Linux) — Khuyên dùng & Đơn giản nhất](#cách-1-chạy-trực-tiếp-python-trên-windows--linux)
+  - [Cách 2: Triển khai bằng Docker trên VPS (Tùy chọn)](#cách-2-triển-khai-1-click-bằng-docker-trên-vps)
 - [6. Cấu Hình Biến Môi Trường (.env)](#6-cấu-hình-biến-môi-trường-env)
-- [7. Hướng Dẫn Sử Dụng & Bảng Lệnh](#7-hướng-dẫn-sử-dụng--bảng-lệnh)
-  - [7.1. Lệnh Quản Trị Hệ Thống Dành Cho Owner (!sync, !reload)](#71-lệnh-quản-trị-hệ-thống-dành-cho-owner-sync-reload)
-  - [7.2. Nhóm Âm Nhạc (Music)](#72-nhóm-âm-nhạc-music)
-  - [7.3. Nhóm Giao Tiếp Voice (TTS)](#73-nhóm-giao-tiếp-voice-tts)
-  - [7.4. Nhóm Thiết Lập Server Bảo Mật Modal (/setup-server)](#74-nhóm-thiết-lập-server-bảo-mật-modal-setup-server)
-  - [7.5. Nhóm Quản Trị Tự Động & Level/Rank (AutoMod)](#75-nhóm-quản-trị-tự-động--levelrank-automod)
+- [7. Hướng Dẫn Sử Dụng & Bảng Lệnh Đầy Đủ](#7-hướng-dẫn-sử-dụng--bảng-lệnh-đầy-đủ)
+  - [7.1. Lệnh Quản Trị Hệ Thống Dành Cho Owner (!sync, !reload, !status)](#71-lệnh-quản-trị-hệ-thống-dành-cho-owner-sync-reload)
+  - [7.2. Nhóm Lệnh Chung, Cài Đặt & Thẻ Rank Đồ Họa (/help, /rank, /leaderboard, /settings)](#72-nhóm-lệnh-chung-cài-đặt--thẻ-rank-đồ-họa-help-rank-leaderboard-settings)
+  - [7.3. Nhóm Bói Tình Duyên & Cặp Đôi (Love Calculator & Marry System)](#73-nhóm-bói-tình-duyên--cặp-đôi-love-calculator--marry-system)
+  - [7.4. Nhóm Tương Tác Thân Mật Tăng Điểm Nhẫn Cưới (/kiss, /hug, /pat, /slap)](#74-nhóm-tương-tác-thân-mật-tăng-điểm-nhẫn-cưới-kiss-hug-pat-slap)
+  - [7.5. Nhóm Âm Nhạc (Music)](#75-nhóm-âm-nhạc-music)
+  - [7.6. Nhóm Giao Tiếp Voice (TTS)](#76-nhóm-giao-tiếp-voice-tts)
+  - [7.7. Nhóm Thiết Lập Server 3 Bước Xác Nhận (/setup-server)](#77-nhóm-thiết-lập-server-3-bước-xác-nhận-setup-server)
+  - [7.8. Nhóm Quản Trị Tự Động (AutoMod)](#78-nhóm-quản-trị-tự-động-automod)
 - [8. Cơ Chế Xử Lý Lỗi Tập Trung & Bảo Vệ Tài Nguyên](#8-cơ-chế-xử-lý-lỗi-tập-trung--bảo-vệ-tài-nguyên)
 - [9. Nhật Ký Cập Nhật & Tiến Độ Làm Việc (Worklog & Changelog)](#9-nhật-ký-cập-nhật--tiến-độ-làm-việc-worklog--changelog)
 - [10. Kế Hoạch Phát Triển (Roadmap)](#10-kế-hoạch-phát-triển-roadmap)
@@ -48,15 +51,23 @@ Hệ thống cung cấp đầy đủ các chức năng quan trọng nhất cho c
 
 ---
 
-## 2. Kiến Trúc Cơ Sở Dữ Liệu: Vì Sao Dùng SQLite Siêu Nhẹ Trên VPS?
+## 2. Kiến Trúc Cơ Sở Dữ Liệu & Triển Khai: SQLite vs Docker
 
-> [!TIP]
-> **SQLite có cần cài đặt phức tạp trên VPS không?**
-> **HOÀN TOÀN KHÔNG!** SQLite được tích hợp sẵn 100% trong Python chuẩn. Khi bạn chạy bot trên VPS, bạn **không cần cài MySQL, PostgreSQL, Redis** hay mở bất kỳ cổng mạng (port) nào.
+> [!IMPORTANT]
+> **Câu hỏi quan trọng: "Docker có cần thiết không? Tôi tưởng chỉ cần SQLite là đủ rồi chứ?"**
+>
+> 💡 **Giải đáp chuẩn xác:**
+> 1. **Về Cơ sở dữ liệu: SQLite là ĐỦ 100%!**  
+>    SQLite là một database hoàn chỉnh được tích hợp sẵn bên trong Python. Bạn **KHÔNG CẦN** bất kỳ cơ sở dữ liệu rời nào khác (như MySQL, PostgreSQL, MongoDB, Redis). Toàn bộ dữ liệu của bot (Cấu hình server, Level/Rank, Nhà kết hôn, Album ảnh, Nhẫn cưới, Log AutoMod) được lưu gọn trong **1 file duy nhất `data/sosapy.db`**.
+>
+> 2. **Về Docker: Hoàn toàn TÙY CHỌN (Optional)!**  
+>    - **Docker KHÔNG PHẢI là database:** Docker chỉ là một "hộp đóng gói" giúp gom Python + FFmpeg lại một chỗ.
+>    - **Nếu bạn KHÔNG muốn dùng Docker:** Bạn hoàn toàn có thể chạy bot trực tiếp trên VPS Ubuntu / Debian cực kỳ nhẹ nhàng: chỉ cần chạy 1 dòng `sudo apt install ffmpeg python3-pip` rồi `python main.py`. Dùng `pm2` hoặc `systemd` để bot tự chạy ngầm 24/7.
+>    - **Nếu bạn thích Docker:** Dự án đã viết sẵn `Dockerfile` & `docker-compose.yml` để bạn gõ đúng 1 lệnh là xong mà không cần cài FFmpeg thủ công.
 
-### Ưu điểm vượt trội của SQLite (`aiosqlite`) so với JSON:
+### Ưu điểm vượt trội của SQLite (`aiosqlite` WAL Mode) trong SosaPy:
 1. **Không nghẽn Disk I/O:** JSON buộc phải đọc và ghi lại toàn bộ file mỗi lần thay đổi 1 giá trị. SQLite chỉ ghi đúng dòng (row) cần cập nhật.
-2. **Chế độ WAL (Write-Ahead Logging):** Được kích hoạt sẵn qua `PRAGMA journal_mode = WAL;`. Chế độ này cho phép nhiều lệnh đọc và ghi diễn ra đồng thời mà không bao giờ bị lỗi `database is locked`.
+2. **Chế độ WAL (Write-Ahead Logging):** Kích hoạt sẵn qua `PRAGMA journal_mode = WAL;`. Chế độ này cho phép nhiều lệnh đọc và ghi diễn ra đồng thời mà không bao giờ bị lỗi `database is locked`.
 3. **Bảng xếp hạng (Leaderboard) siêu tốc:** SQLite hỗ trợ câu lệnh SQL truy vấn trực tiếp:
    ```sql
    SELECT user_id, xp, level FROM user_levels WHERE guild_id = ? ORDER BY xp DESC LIMIT 10;
@@ -70,7 +81,7 @@ Hệ thống cung cấp đầy đủ các chức năng quan trọng nhất cho c
 ```mermaid
 flowchart TD
     subgraph Discord_Platform["Discord Gateway"]
-        Events["Tin nhắn / Slash Commands / Voice State"]
+        Events["Tin nhắn / Slash Commands / Nút bấm tương tác UI"]
     end
 
     subgraph Core_Engine["Core & Shared Utilities"]
@@ -78,6 +89,7 @@ flowchart TD
         Config["config.py (.env Reader)"]
         Logger["utils/logger.py (Rotating Logs)"]
         Database["utils/database.py (aiosqlite WAL)"]
+        CanvasEngine["utils/canvas.py (Pillow Graphics Renderer)"]
         ErrorHandler["utils/error_handler.py (Global Errors)"]
     end
 
@@ -85,7 +97,21 @@ flowchart TD
         subgraph Admin_Module["cogs/admin/"]
             CmdSync["!sync (On-Demand Sync)"]
             CmdReload["!reload (Hot Reload Cogs)"]
-            CmdStatus["!botstatus (Resource Monitor)"]
+            CmdStatus["!status (Resource Monitor)"]
+        end
+
+        subgraph General_Module["cogs/general/"]
+            CmdRank["/rank & !rank (Thẻ đồ họa Chibi Gal)"]
+            CmdLb["/leaderboard (Bảng vàng Top 10)"]
+            CmdHelp["/help (Bảng hướng dẫn lệnh)"]
+            CmdSettings["/settings (Bật/Tắt tự động từng Guild)"]
+        end
+
+        subgraph Marry_Module["cogs/marry/"]
+            CmdLovec["/lovec & !lovec (Bói tình duyên Canvas)"]
+            CmdMarry["/marry & !marry (Ngôi Nhà Cặp Đôi 3 Tab)"]
+            CmdGallery["/lgallery (Album 6 ảnh kỷ niệm)"]
+            CmdSocial["/kiss, /hug, /pat, /slap (Tăng điểm Nhẫn Cưới)"]
         end
 
         subgraph Music_Module["cogs/music/"]
@@ -99,7 +125,7 @@ flowchart TD
         end
 
         subgraph Setup_Module["cogs/setup_server/"]
-            S_Cog["cog.py (Modal Passcode & Rate Limiting)"]
+            S_Cog["cog.py (Xác thực 3 Bước & Rate Limiting)"]
             S_Json["templates.json (Template Data)"]
         end
 
@@ -109,15 +135,17 @@ flowchart TD
     end
 
     subgraph Storage_Layer["Persistent Storage"]
-        DBFile["data/sosapy.db (SQLite Database)"]
+        DBFile["data/sosapy.db (SQLite WAL Database)"]
         LogsFolder["logs/bot.log (Log File)"]
         TempFolder["temp/ (Auto-Cleaned Files)"]
     end
 
     Events <--> Main
-    Main --> Config & Logger & Database & ErrorHandler
+    Main --> Config & Logger & Database & CanvasEngine & ErrorHandler
     Main --> Feature_Folders
     Feature_Folders <--> Database
+    General_Module --> CanvasEngine
+    Marry_Module --> CanvasEngine
     Database <--> DBFile
     Logger --> LogsFolder
     T_Cog --> TempFolder
@@ -131,18 +159,27 @@ flowchart TD
 SosaPy/
 ├── .env                          # Lưu biến môi trường bí mật (Token, Key) - KHÔNG ĐẨY LÊN GIT
 ├── .env.example                  # Mẫu cấu hình môi trường chuẩn
-├── .gitignore                    # Bỏ qua cache, file tạm, file database nhạy cảm
-├── Dockerfile                    # Đóng gói Docker cài sẵn Python 3.12 + FFmpeg cho VPS
-├── docker-compose.yml            # Khởi chạy bot 1-click bằng Docker
+├── .gitignore                    # Bỏ qua cache, file tạm, file database nhạy cảm (*.db)
+├── Dockerfile                    # Đóng gói Docker cài sẵn Python 3.12 + FFmpeg cho VPS (Tùy chọn)
+├── docker-compose.yml            # Khởi chạy bot 1-click bằng Docker (Tùy chọn)
 ├── config.py                     # Quản lý tập trung cấu hình hệ thống
 ├── main.py                       # Khởi chạy: nạp cogs, SQLite, dọn rác temp, error handler
-├── requirements.txt              # Danh sách thư viện (có aiosqlite)
+├── requirements.txt              # Danh sách thư viện (aiosqlite, pillow, discord.py, ...)
 ├── README.md                     # Tài liệu kỹ thuật trung tâm
 │
 ├── cogs/                         # THƯ MỤC CHỨC NĂNG (MỖI CHỨC NĂNG 1 FOLDER)
-│   ├── admin/                    # [QUẢN TRỊ OWNER] Lệnh !sync, !reload, !botstatus
+│   ├── admin/                    # [QUẢN TRỊ OWNER] Lệnh !sync, !reload, !status
 │   │   ├── __init__.py
 │   │   └── cog.py
+│   │
+│   ├── general/                  # [CHUNG & CÀI ĐẶT] /help, /rank đồ họa, /leaderboard, /settings
+│   │   ├── __init__.py
+│   │   └── cog.py
+│   │
+│   ├── marry/                    # [BÓI DUYÊN & KẾT HÔN] /lovec, /marry, /lgallery, /kiss, /hug...
+│   │   ├── __init__.py
+│   │   ├── cog.py                # Lệnh slash & prefix, tính toán seed, hành động tương tác
+│   │   └── views.py              # Giao diện UI: Lời cầu hôn 💍, Ngôi Nhà 3 Tab (Home, Gallery, Notes)
 │   │
 │   ├── music/                    # [NGHE NHẠC] YouTube, SoundCloud, Spotify
 │   │   ├── __init__.py
@@ -150,25 +187,26 @@ SosaPy/
 │   │   ├── player.py             # Queue loop, đồng bộ ngắt khi có TTS
 │   │   └── sources.py            # yt-dlp và trích xuất Spotify non-blocking
 │   │
-│   ├── setup_server/             # [SETUP SERVER] Template mẫu và Modal bảo mật
+│   ├── setup_server/             # [SETUP SERVER] Template mẫu và Xác nhận 3 Bước
 │   │   ├── __init__.py
-│   │   ├── cog.py                # Hộp thoại Modal nhập mã bảo mật, chống Rate Limit
+│   │   ├── cog.py                # 3 bước confirm nút bấm, chỉ Server Owner
 │   │   └── templates.json        # Dữ liệu JSON mô tả Category, Channel và Role
 │   │
 │   ├── tts/                      # [VOICE TTS] Text-To-Speech tiếng Việt
 │   │   ├── __init__.py
 │   │   └── cog.py                # Lệnh /speak, giới hạn 300 ký tự, non-blocking gTTS
 │   │
-│   └── automod/                  # [AUTOMOD & RANK] Lọc từ cấm, link rác, cộng XP
+│   └── automod/                  # [AUTOMOD & XP] Lọc từ cấm, link rác, cộng XP
 │       ├── __init__.py
 │       └── cog.py                # Whitelist kênh nhạc, chống rò rỉ RAM, cộng XP SQLite
 │
 ├── data/                         # THƯ MỤC CƠ SỞ DỮ LIỆU
-│   └── sosapy.db                 # File SQLite Database đơn giản, siêu nhẹ
+│   └── sosapy.db                 # File SQLite Database đơn giản, siêu nhẹ (WAL Mode)
 │
 ├── utils/                        # TIỆN ÍCH DÙNG CHUNG
 │   ├── __init__.py
-│   ├── database.py               # DatabaseManager quản lý SQLite (aiosqlite WAL)
+│   ├── database.py               # DatabaseManager quản lý SQLite (bảng settings, levels, marriages)
+│   ├── canvas.py                 # Bộ vẽ đồ họa Pillow (Thẻ Rank Cyberpunk, Banner Love Calculator Lunari-style)
 │   ├── error_handler.py          # Bộ xử lý lỗi tập trung cho toàn bộ Slash Commands
 │   ├── logger.py                 # Hệ thống ghi log (Console + Rotating File bot.log)
 │   └── storage.py                # Hỗ trợ đọc/ghi file JSON an toàn (Lock + Atomic)
@@ -252,26 +290,73 @@ docker compose up -d --build
 
 ---
 
-## 7. Hướng Dẫn Sử Dụng & Bảng Lệnh
+## 7. Hướng Dẫn Sử Dụng & Bảng Lệnh Đầy Đủ
 
-### 7.1. Lệnh Quản Trị Hệ Thống Dành Cho Owner (!sync, !reload)
+### 7.1. Lệnh Quản Trị Hệ Thống Dành Cho Owner (!sync, !reload, !status)
 *Các lệnh này chỉ có chủ bot (`OWNER_IDS`) mới dùng được, dùng tiền tố prefix (`!`):*
 
 - `!sync guild`: Đồng bộ toàn bộ Slash Commands vào Server hiện tại ngay tức thì (dùng khi thử nghiệm tính năng mới mà không lo dính Rate Limit).
 - `!sync global`: Đồng bộ toàn bộ Slash Commands ra toàn cầu (Discord mất khoảng 1-10 phút để hiển thị trên tất cả server).
-- `!reload <module>`: Tải lại tức thì một module cog (ví dụ: `!reload music` hoặc `!reload automod`) mà không cần tắt bot, không làm gián đoạn phòng nghe nhạc.
+- `!reload <module>`: Tải lại tức thì một module cog (ví dụ: `!reload marry`, `!reload general`, `!reload music`) mà không cần tắt bot, không làm gián đoạn phòng nghe nhạc.
 - `!status`: Kiểm tra Ping mạng, mức chiếm dụng RAM (MB), thời gian hoạt động liên tục (Uptime) và trạng thái SQLite.
 
 ---
 
-### 7.2. Nhóm Lệnh Chung (/help, /rank, /leaderboard)
-- `/help`: Xem hướng dẫn sử dụng và danh sách toàn bộ các câu lệnh của bot (phân theo từng danh mục kèm mô tả chi tiết).
-- `/rank [member]`: Xem cấp độ (Level), điểm kinh nghiệm (XP) hiện tại và thanh tiến trình thăng cấp của bạn hoặc thành viên khác.
-- `/leaderboard`: Xem Bảng vàng Top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server.
+### 7.2. Nhóm Lệnh Chung, Cài Đặt & Thẻ Rank Đồ Họa (/help, /rank, /leaderboard, /settings)
+- `/help`: Xem hướng dẫn sử dụng và danh sách toàn bộ các câu lệnh của bot phân theo từng danh mục.
+- `/rank [member]` (hoặc `!rank [@member]`): **Thẻ Rank đồ họa phong cách Chibi Gal Hiphop Neon cực đỉnh!** Vẽ trực tiếp bằng Canvas (Pillow) với avatar bo tròn viền phát sáng kép, cấp độ, thứ hạng server, điểm kinh nghiệm XP và thanh tiến trình thăng cấp neon rực rỡ.
+- `/leaderboard`: Xem Bảng vàng Top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server (truy vấn SQLite siêu tốc).
+- `/settings view`: Xem bảng trạng thái BẬT/TẮT hiện tại của các tính năng tự động chạy ngầm trên máy chủ.
+- `/settings automod <enable>`: BẬT hoặc TẮT bộ lọc từ cấm, link rác và chống spam.
+- `/settings level <enable>`: BẬT hoặc TẮT hệ thống tính điểm kinh nghiệm (XP) khi chat.
 
 ---
 
-### 7.3. Nhóm Âm Nhạc (Music)
+### 7.3. Nhóm Bói Tình Duyên & Cặp Đôi (Love Calculator & Marry System)
+Hệ thống lấy cảm hứng từ Lunari Bot nhưng được nâng cấp toàn diện và đồng bộ với SQLite Database:
+
+#### 1. Bói Tình Duyên (Love Calculator):
+- **Cú pháp:** `/lovec <target> [target2]` hoặc `!lovec <@user | tên | ID | random>`
+- **Cơ chế ngẫu nhiên công bằng:**
+  - Nếu chọn `@user`: Tính toán độ hợp nhau giữa bạn và người đó.
+  - Nếu gõ `random`: Bot sẽ tự động chọn ngẫu nhiên một thành viên đang có mặt trong server để ghép đôi với bạn!
+  - Seed ngẫu nhiên được neo theo ngày (mỗi ngày có một chỉ số duyên phận riêng, sang ngày hôm sau sẽ đổi).
+- **Banner đồ họa Canvas:** Vẽ banner tông pastel cute (hồng đào / kem) với 2 avatar bo tròn có viền phát sáng, trái tim ở giữa hiển thị tỷ lệ `%`, đường xung nhịp tim tình yêu (ECG line) và thanh đo độ hợp (Love Meter) ở cạnh dưới, kèm lời bình hài hước, dí dỏm.
+
+#### 2. Hệ Thống Kết Hôn & Ngôi Nhà Cặp Đôi (Marry System):
+- `/marry <@user>` (hoặc `!marry @user`): Gửi lời cầu hôn ngọt ngào đến người ấy. Bot sẽ xuất hiện giao diện tương tác gồm 2 nút bấm: **💍 Đồng Ý** hoặc **💔 Từ Chối** (chỉ người được cầu hôn mới bấm được, thời gian chờ 120s).
+- `/marry` (hoặc `!marry`): Mở giao diện **Ngôi Nhà Cặp Đôi (Marry House)** với 3 nút bấm tương tác:
+  - 🏠 **Trang Chủ:** Hiển thị Tên ngôi nhà, Châm ngôn tình yêu, Ngày kết hôn, Điểm thân mật, Cấp bậc Nhẫn Cưới và ảnh nền tùy biến.
+  - 🖼️ **Ảnh & Video (Gallery):** Thư viện ảnh kỷ niệm với 6 slot ảnh. Người dùng có thể bấm nút **⬅️ Ảnh Trước** và **➡️ Ảnh Sau** để lướt xem từng kỷ niệm đã lưu.
+  - 📝 **Ghi Chú:** Bảng danh sách 5 cấp bậc Nhẫn Cưới cùng hướng dẫn chi tiết các lệnh tương tác.
+- `/marry_name <tên mới>` (hoặc `!name <tên mới>`): Đổi tên cho ngôi nhà cặp đôi.
+- `/marry_quote <châm ngôn>` (hoặc `!quote <châm ngôn>`): Đổi câu nói/châm ngôn tình yêu hiển thị ở trang chủ.
+- `/lgallery <slot 1-6> <URL ảnh>` (hoặc `!lgallery <1-6> <URL>`): Lưu ảnh kỷ niệm vào 1 trong 6 vị trí của album.
+- `/divorce` (hoặc `!divorce`): Ly hôn và giải phóng ngôi nhà cặp đôi khi không còn chung đường.
+
+---
+
+### 7.4. Nhóm Tương Tác Thân Mật Tăng Điểm Nhẫn Cưới (/kiss, /hug, /pat, /slap)
+- **Các câu lệnh hành động:**
+  - `/kiss <@user>` hoặc `!kiss <@user>`: Trao nụ hôn ngọt ngào.
+  - `/hug <@user>` hoặc `!hug <@user>`: Cái ôm ấm áp.
+  - `/pat <@user>` hoặc `!pat <@user>`: Xoa đầu cưng nựng.
+  - `/slap <@user>` hoặc `!slap <@user>`: Phát tát yêu thương / giận dỗi.
+- **Cơ chế Điểm Thân Mật & Nâng Cấp Nhẫn Cưới:**
+  - Khi bạn thực hiện bất kỳ hành động nào trên với **người bạn đời đã kết hôn**, cả hai sẽ được cộng **+10 Điểm Thân Mật** (cooldown 30 giây chống spam).
+  - Điểm thân mật càng cao, Nhẫn Cưới của hai bạn càng được nâng cấp sang phẩm cấp cao hơn:
+
+| Cấp bậc | Tên Nhẫn Cưới | Điểm yêu cầu | Biểu tượng & Mô tả |
+| :---: | :--- | :---: | :--- |
+| **Tier 1** | **Nhẫn Cỏ Thần Tiên** | 0 – 49 điểm | 🌿 Mộc mạc, giản dị thuở mới về chung một nhà |
+| **Tier 2** | **Nhẫn Bạc Thuần Khiết** | 50 – 149 điểm | 🪙 Tình cảm êm đềm, gắn bó qua từng ngày |
+| **Tier 3** | **Nhẫn Vàng Vương Giả** | 150 – 299 điểm | 👑 Sang trọng, tình yêu đằm thắm và bền chặt |
+| **Tier 4** | **Nhẫn Kim Cương Vĩnh Cửu** | 300 – 499 điểm | 💎 Lấp lánh, tình cảm son sắt không thể chia lìa |
+| **Tier 5** | **Nhẫn Vô Cực Ngân Hà** | 500+ điểm | 🌌 Tình yêu huyền thoại vượt qua không gian và thời gian! |
+
+---
+
+### 7.5. Nhóm Âm Nhạc (Music)
 - `/play <query>`: Phát nhạc từ đường link (YouTube, SoundCloud, Spotify) hoặc gõ từ khóa tìm kiếm bài hát.
 - `/pause`: Tạm dừng bài hát đang phát trong phòng thoại.
 - `/resume`: Tiếp tục phát bài hát đang bị tạm dừng.
@@ -282,13 +367,13 @@ docker compose up -d --build
 
 ---
 
-### 7.4. Nhóm Giao Tiếp Voice (TTS)
+### 7.6. Nhóm Giao Tiếp Voice (TTS)
 - `/speak <text>`: Chuyển văn bản tiếng Việt thành giọng nói trong kênh thoại (tối đa 300 ký tự).
 - **Điều phối âm thanh thông minh:** Nếu đang phát nhạc, bot sẽ tự động lưu lại bài hát đang nghe dở, đọc thông báo TTS xong rồi mới tiếp tục phát nhạc, không gây xung đột âm thanh `Already playing audio`.
 
 ---
 
-### 7.5. Nhóm Thiết Lập Server 3 Bước Xác Nhận (/setup-server)
+### 7.7. Nhóm Thiết Lập Server 3 Bước Xác Nhận (/setup-server)
 - `/setup-server [clear_old]`: Khởi tạo toàn bộ cấu trúc Danh mục, Kênh và Quyền theo template mẫu chuẩn.
 - **Xác thực 3 Bước nghiêm ngặt:** Chỉ duy nhất **Chủ Server (Server Owner)** mới có quyền thực thi. Hệ thống yêu cầu xác nhận lần lượt qua 3 nút bấm tương tác (Bước 1: Giới thiệu quy mô $\rightarrow$ Bước 2: Cảnh báo mất dữ liệu cũ $\rightarrow$ Bước 3: Xác nhận tối hậu 100%).
 - **Loại bỏ Master Key:** Hoàn toàn không cần ghi nhớ hay nhập mật mã thủ công, bảo vệ tối cao dựa trên quyền sở hữu Guild Owner.
@@ -296,7 +381,7 @@ docker compose up -d --build
 
 ---
 
-### 7.6. Nhóm Quản Trị Tự Động & Level/Rank (AutoMod)
+### 7.8. Nhóm Quản Trị Tự Động (AutoMod)
 - **Lọc từ cấm:** Tự động xóa tin nhắn vi phạm và nhắc nhở 5s.
 - **Lọc link có Whitelist:** Chặn các liên kết ngoài, nhưng cho phép gửi link YouTube/SoundCloud/Spotify trong các kênh âm nhạc hoặc media.
 - **Chống Spam:** Tự động phát hiện spam và phạt timeout 5 phút, tự động giải phóng bộ nhớ RAM.
@@ -319,7 +404,14 @@ docker compose up -d --build
 
 | Phiên bản | Ngày cập nhật | Người thực hiện | Nội dung chi tiết |
 | :---: | :---: | :---: | :--- |
+| **v1.7.0** | 2026-11-23 | Antigravity & User | **Hệ thống Marry House, Bói Tình Duyên & Thẻ Rank Canvas Đồ Họa:**<br>• Tích hợp bộ vẽ hình ảnh trực tiếp qua RAM với Pillow (`utils/canvas.py`): Thẻ Rank Chibi Gal Hiphop Neon và Banner Love Calculator Lunari-style pastel cute.<br>• Bổ sung module `cogs/marry/`: Lệnh `/lovec` (hỗ trợ `random` ghép đôi cùng server), `/marry` cầu hôn tương tác 💍, giao diện Ngôi Nhà Cặp Đôi 3 Tab (Trang Chủ, Album 6 ảnh, Ghi Chú).<br>• Lệnh tương tác tình cảm: `/kiss`, `/hug`, `/pat`, `/slap` tích lũy điểm thân mật (+10đ) và tự động nâng cấp 5 bậc Nhẫn Cưới.<br>• Mở rộng SQLite với bảng `marriages` và các hàm truy vấn quan hệ hôn nhân. |
 | **v1.6.0** | 2026-11-23 | Antigravity & User | **Mặc định TẮT tính năng tự động khi vào server mới & Nhóm lệnh /settings:**<br>• Lắng nghe sự kiện `on_guild_join`: Tự động lưu cấu hình server vào SQLite với trạng thái TẮT toàn bộ tính năng tự động (AutoMod, Level/XP) để tôn trọng quyền riêng tư.<br>• Bổ sung nhóm lệnh `/settings` (`view`, `automod`, `level`) cho Quản trị viên chủ động BẬT/TẮT từng tính năng theo nhu cầu.<br>• Phân tách rạch ròi giữa lệnh chủ động (Slash Commands) và tiến trình chạy ngầm thời gian thực (Background Listeners). |
+| **v1.5.0** | 2026-11-23 | Antigravity & User | **Xác thực 3 Bước & Hoàn thiện Slash Commands:**<br>• Nâng cấp `/setup-server` với quy trình xác thực 3 lần qua nút bấm tương tác (ConfirmationStepView), loại bỏ hoàn toàn Master Key.<br>• Bổ sung module `cogs/general/` với các lệnh `/help`, `/rank`, `/leaderboard`.<br>• Rà soát và cập nhật đầy đủ mô tả chi tiết, rõ ràng cho tất cả 11 Slash Commands.<br>• Tích hợp tính năng tự động thoát phòng thoại khi phòng trống người. |
+| **v1.4.0** | 2026-11-23 | Antigravity & User | **Tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode):** Xây dựng `DatabaseManager`, lệnh Admin `!sync`, `!reload`, `!status`, xử lý lỗi tập trung. |
+| **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:** Đồng bộ hóa Voice giữa TTS và Music, chuyển I/O sang `asyncio.to_thread`. |
+| **v1.2.0** | 2026-11-23 | Antigravity & User | **Tái cấu trúc Feature-Folder:** Tách mỗi tính năng thành 1 folder riêng trong `cogs/`. |
+| **v1.1.0** | 2026-11-23 | Antigravity & User | **Chuẩn hóa Enterprise Architecture:** Tách `.env`, `config.py`, `utils/logger.py`. |
+| **v1.0.0** | 2026-07-10 | User | **Khởi tạo dự án ban đầu:** 4 cogs phẳng cơ bản. |
 | **v1.5.0** | 2026-11-23 | Antigravity & User | **Xác thực 3 Bước & Hoàn thiện Slash Commands:**<br>• Nâng cấp `/setup-server` với quy trình xác thực 3 lần qua nút bấm tương tác (ConfirmationStepView), loại bỏ hoàn toàn Master Key.<br>• Bổ sung module `cogs/general/` với các lệnh `/help`, `/rank`, `/leaderboard`.<br>• Rà soát và cập nhật đầy đủ mô tả chi tiết, rõ ràng cho tất cả 11 Slash Commands.<br>• Tích hợp tính năng tự động thoát phòng thoại khi phòng trống người. |
 | **v1.4.0** | 2026-11-23 | Antigravity & User | **Tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode):** Xây dựng `DatabaseManager`, lệnh Admin `!sync`, `!reload`, `!status`, xử lý lỗi tập trung. |
 | **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:** Đồng bộ hóa Voice giữa TTS và Music, chuyển I/O sang `asyncio.to_thread`. |
