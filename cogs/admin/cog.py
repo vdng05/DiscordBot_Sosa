@@ -14,14 +14,25 @@ class Admin(commands.Cog):
         self.bot = bot
         self.start_time = time.time()
 
-    @commands.command(name="sync", description="Đồng bộ Slash Commands theo yêu cầu (Chống Rate Limit lúc restart)")
-    @commands.is_owner()
+    @commands.command(name="sync", description="Đồng bộ Slash Commands tức thì vào Server (!sync hoặc !sync guild)")
     async def sync_commands(self, ctx: commands.Context, scope: str = "guild"):
         """
         Cú pháp:
-        !sync guild  -> Đồng bộ tức thì cho server hiện tại (không lo Rate Limit, rất tiện lúc test)
-        !sync global -> Đồng bộ toàn cầu cho tất cả server (Discord mất 1-10 phút để cập nhật)
+        !sync         -> Đồng bộ tức thì toàn bộ Slash Commands vào server hiện tại
+        !sync guild   -> Tương tự (!sync)
+        !sync global  -> Đồng bộ toàn cầu (chỉ dành cho Chủ Bot)
         """
+        is_bot_owner = await self.bot.is_owner(ctx.author)
+        is_guild_admin = ctx.guild and (ctx.author == ctx.guild.owner or ctx.author.guild_permissions.administrator)
+
+        if not (is_bot_owner or is_guild_admin):
+            await ctx.send("⛔ Lệnh này yêu cầu quyền **Quản trị viên (Administrator)** hoặc là **Chủ bot**!")
+            return
+
+        if scope.lower() == "global" and not is_bot_owner:
+            await ctx.send("⛔ Đồng bộ toàn cầu (`!sync global`) chỉ dành cho Chủ Bot. Bạn hãy gõ `!sync` để đồng bộ cho server này nhé!")
+            return
+
         msg = await ctx.send(f"⏳ Đang đồng bộ Slash Commands phạm vi: `{scope}`...")
 
         try:
@@ -32,8 +43,11 @@ class Admin(commands.Cog):
             else:
                 self.bot.tree.copy_global_to(guild=ctx.guild)
                 synced = await self.bot.tree.sync(guild=ctx.guild)
-                await msg.edit(content=f"✅ Đã đồng bộ thành công **{len(synced)}** Slash Commands cho Server `{ctx.guild.name}`!")
-                logger.info(f"Owner {ctx.author} đã đồng bộ {len(synced)} lệnh cho Guild {ctx.guild.id}.")
+                await msg.edit(content=(
+                    f"✅ **Đồng bộ thành công {len(synced)} Slash Commands cho máy chủ `{ctx.guild.name}`!**\n"
+                    "👉 Bây giờ bạn có thể gõ `/` để thấy đầy đủ tất cả các lệnh của SosaBot."
+                ))
+                logger.info(f"{ctx.author} đã đồng bộ {len(synced)} lệnh cho Guild {ctx.guild.id}.")
         except Exception as e:
             await msg.edit(content=f"❌ Lỗi đồng bộ: {e}")
             logger.error(f"Lỗi sync lệnh: {e}", exc_info=True)

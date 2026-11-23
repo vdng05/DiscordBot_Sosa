@@ -6,8 +6,178 @@ from utils.canvas import draw_rank_card
 
 logger = logging.getLogger("SosaBot.General")
 
+def get_help_embed(category: str = "all") -> discord.Embed:
+    """Tạo Embed hướng dẫn lệnh tương ứng theo từng danh mục hoặc tổng quan"""
+    if category == "music":
+        embed = discord.Embed(
+            title="🎵 HỆ THỐNG ÂM NHẠC (MUSIC)",
+            description="Phát nhạc chất lượng cao, tự động điều phối hàng đợi và tiết kiệm tài nguyên máy chủ.",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="• `/play <query>`", value="Phát nhạc từ link (YouTube, SoundCloud, Spotify) hoặc gõ tên bài hát để bot tự tìm kiếm.", inline=False)
+        embed.add_field(name="• `/pause`", value="Tạm dừng bài hát đang phát trong phòng thoại.", inline=False)
+        embed.add_field(name="• `/resume`", value="Tiếp tục phát bài hát đang bị tạm dừng.", inline=False)
+        embed.add_field(name="• `/skip`", value="Bỏ qua bài hát hiện tại và phát bài tiếp theo trong hàng đợi.", inline=False)
+        embed.add_field(name="• `/queue`", value="Xem danh sách toàn bộ các bài hát đang chờ trong hàng đợi.", inline=False)
+        embed.add_field(name="• `/leave`", value="Yêu cầu bot rời phòng thoại và làm sạch hàng đợi.", inline=False)
+        embed.set_footer(text="Bot sẽ tự động rời phòng thoại sau 5 phút nếu không có bài hát hoặc phòng trống người.")
+        return embed
+
+    elif category == "tts":
+        embed = discord.Embed(
+            title="🗣️ GIAO TIẾP GIỌNG NÓI (VOICE TTS)",
+            description="Chuyển văn bản tiếng Việt thành giọng nói tự nhiên trong kênh thoại dành cho thành viên không có micro.",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="• `/speak <text>`", value="Đọc nội dung văn bản tiếng Việt (tối đa 300 ký tự chống spam).", inline=False)
+        embed.add_field(name="💡 Cơ chế điều phối âm thanh thông minh", value="Nếu bot đang phát nhạc, bot sẽ tự lưu bài hát đang nghe dở, đọc xong câu TTS rồi tự động tiếp tục phát nhạc mượt mà không lỗi xung đột.", inline=False)
+        embed.set_footer(text="Hỗ trợ cả phòng chat thoại lẫn chat tin nhắn thông thường.")
+        return embed
+
+    elif category == "rank":
+        embed = discord.Embed(
+            title="⭐ CẤP ĐỘ & THẺ RANK ĐỒ HỌA (LEVEL & XP)",
+            description="Tích lũy kinh nghiệm khi giao lưu trong server, lưu trữ trực tiếp trên SQLite Database siêu tốc.",
+            color=discord.Color.gold()
+        )
+        embed.add_field(name="• `/rank [member]` (hoặc `!rank`)", value="Xem **Thẻ Rank đồ họa cực đỉnh** (Canvas Anime Chibi Gal Hiphop Neon) hiển thị Level, XP, thứ hạng server và thanh tiến trình.", inline=False)
+        embed.add_field(name="• `/leaderboard`", value="Xem Bảng vàng vinh danh Top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server.", inline=False)
+        embed.add_field(name="📈 Cách nhận XP", value="Mỗi tin nhắn hợp lệ gửi vào server được cộng từ 15 đến 25 XP (có cooldown 60s chống spam). Quản trị viên có thể BẬT/TẮT tính năng này qua `/settings level`.", inline=False)
+        embed.set_footer(text="Dữ liệu được lưu trữ tự động trong SQLite Database an toàn.")
+        return embed
+
+    elif category == "marry":
+        embed = discord.Embed(
+            title="💘 BÓI TÌNH DUYÊN & KẾT HÔN (LOVE & MARRY)",
+            description="Hệ thống bói duyên banner đồ họa phong cách Lunari và Ngôi Nhà Cặp Đôi tương tác 3 tab.",
+            color=discord.Color.pink()
+        )
+        embed.add_field(name="• `/lovec <target>` (hoặc `!lovec`)", value="Đo độ hợp nhau giữa 2 người (gõ `random` để bot bốc ngẫu nhiên 1 người trong server). Xuất banner đồ họa Anime Gal Hiphop tuyệt đẹp!", inline=False)
+        embed.add_field(name="• `/marry <@user>` (hoặc `!marry`)", value="Cầu hôn người ấy với giao diện tương tác gồm 2 nút bấm: **💍 Đồng Ý** hoặc **💔 Từ Chối** (chờ 120s).", inline=False)
+        embed.add_field(name="• `/marry`", value="Mở giao diện **Ngôi Nhà Cặp Đôi** với 3 Tab: **Trang Chủ**, **Album 6 Ảnh Kỷ Niệm** (có nút lướt ảnh) và **Ghi Chú**.", inline=False)
+        embed.add_field(name="• `/marry_name <tên>` (hoặc `!name`)", value="Đổi tên ngôi nhà cặp đôi.", inline=False)
+        embed.add_field(name="• `/marry_quote <nội dung>` (hoặc `!quote`)", value="Đổi câu châm ngôn tình yêu hiển thị ở trang chủ ngôi nhà.", inline=False)
+        embed.add_field(name="• `/lgallery <1-6> <URL>` (hoặc `!lgallery`)", value="Lưu ảnh kỷ niệm vào 1 trong 6 slot của album gia đình.", inline=False)
+        embed.add_field(name="• `/divorce` (hoặc `!divorce`)", value="Ly hôn và giải phóng ngôi nhà cặp đôi.", inline=False)
+        embed.set_footer(text="Tương tác mỗi ngày để nâng cấp phẩm chất Nhẫn Cưới!")
+        return embed
+
+    elif category == "actions":
+        embed = discord.Embed(
+            title="✨ TƯƠNG TÁC THÂN MẬT (ACTIONS & NHẪN CƯỚI)",
+            description="Các hành động tình cảm kèm GIF anime dễ thương. Khi tương tác với bạn đời đã kết hôn sẽ nhận **+10 Điểm Thân Mật**!",
+            color=discord.Color.purple()
+        )
+        embed.add_field(name="• `/kiss <@user>` (hoặc `!kiss`)", value="Trao cho người ấy một nụ hôn ngọt ngào.", inline=False)
+        embed.add_field(name="• `/hug <@user>` (hoặc `!hug`)", value="Một cái ôm ấm áp siết chặt.", inline=False)
+        embed.add_field(name="• `/pat <@user>` (hoặc `!pat`)", value="Xoa đầu cưng nựng dễ thương.", inline=False)
+        embed.add_field(name="• `/slap <@user>` (hoặc `!slap`)", value="Phát tát giận dỗi đáng yêu.", inline=False)
+        embed.add_field(
+            name="💍 Bảng 5 Cấp Bậc Nhẫn Cưới",
+            value=(
+                "🌿 **Tier 1 - Nhẫn Cỏ Thần Tiên:** 0 - 49 điểm\n"
+                "🪙 **Tier 2 - Nhẫn Bạc Thuần Khiết:** 50 - 149 điểm\n"
+                "👑 **Tier 3 - Nhẫn Vàng Vương Giả:** 150 - 299 điểm\n"
+                "💎 **Tier 4 - Nhẫn Kim Cương Vĩnh Cửu:** 300 - 499 điểm\n"
+                "🌌 **Tier 5 - Nhẫn Vô Cực Ngân Hà:** 500+ điểm (Huyền thoại!)"
+            ),
+            inline=False
+        )
+        embed.set_footer(text="Cooldown tương tác tăng điểm: 30 giây.")
+        return embed
+
+    elif category == "admin":
+        embed = discord.Embed(
+            title="⚙️ QUẢN TRỊ & CÀI ĐẶT MÁY CHỦ (ADMIN)",
+            description="Các công cụ cấu hình và quản trị an ninh dành cho Quản trị viên máy chủ.",
+            color=discord.Color.dark_gray()
+        )
+        embed.add_field(name="• `!sync` (hoặc `!sync guild`)", value="**Cực kỳ quan trọng:** Đồng bộ tức thì toàn bộ 22 lệnh Slash Commands vào server của bạn! (Dùng ngay nếu gõ `/` chưa thấy lệnh mới).", inline=False)
+        embed.add_field(name="• `/settings view`", value="Xem bảng trạng thái BẬT/TẮT hiện tại của AutoMod và Level/XP trên máy chủ.", inline=False)
+        embed.add_field(name="• `/settings automod <enable>`", value="BẬT hoặc TẮT bộ lọc từ cấm, chặn link rác và chống spam.", inline=False)
+        embed.add_field(name="• `/settings level <enable>`", value="BẬT hoặc TẮT hệ thống tính điểm kinh nghiệm (XP) khi chat.", inline=False)
+        embed.add_field(name="• `/setup-server [clear_old]`", value="Khởi tạo danh mục kênh và vai trò theo template chuẩn (3 bước xác nhận nút bấm, chỉ Chủ Server).", inline=False)
+        embed.add_field(name="• `!status`", value="Kiểm tra mức RAM, CPU, ping mạng và thời gian hoạt động của bot.", inline=False)
+        embed.set_footer(text="Tất cả tính năng tự động mặc định TẮT khi bot mới vào server.")
+        return embed
+
+    # MẶC ĐỊNH: TỔNG QUAN TẤT CẢ LỆNH
+    embed = discord.Embed(
+        title="📖 TỔNG HỢP TOÀN BỘ LỆNH SOSABOT",
+        description=(
+            "Chào mừng bạn đến với **SosaPy**! Dưới đây là danh sách toàn bộ các danh mục và lệnh của bot.\n\n"
+            "💡 **CHÚ Ý:** Nếu bạn gõ `/` mà chưa thấy các lệnh mới, hãy gõ ngay lệnh **`!sync`** tại kênh chat để bot đồng bộ toàn bộ Slash Commands vào server của bạn tức thì!\n\n"
+            "👉 *Dùng Menu chọn bên dưới để xem hướng dẫn chi tiết của từng danh mục.*"
+        ),
+        color=discord.Color.from_rgb(255, 105, 180)
+    )
+
+    embed.add_field(
+        name="🎵 1. Âm Nhạc (Music — 6 lệnh)",
+        value="`/play`, `/pause`, `/resume`, `/skip`, `/queue`, `/leave`\n*Hỗ trợ YouTube, SoundCloud, Spotify*",
+        inline=False
+    )
+    embed.add_field(
+        name="🗣️ 2. Voice TTS (1 lệnh)",
+        value="`/speak <text>`: Đọc văn bản tiếng Việt thành giọng nói kênh thoại",
+        inline=False
+    )
+    embed.add_field(
+        name="⭐ 3. Level & Thẻ Rank (2 lệnh)",
+        value="`/rank [member]` *(Thẻ Canvas Anime Gal Hiphop Neon)*, `/leaderboard` *(Top 10)*",
+        inline=False
+    )
+    embed.add_field(
+        name="💘 4. Bói Duyên & Kết Hôn (6 lệnh)",
+        value="`/lovec` *(Bói duyên canvas)*, `/marry` *(Ngôi Nhà 3 Tab)*, `/marry_name`, `/marry_quote`, `/lgallery`, `/divorce`",
+        inline=False
+    )
+    embed.add_field(
+        name="✨ 5. Tương Tác Thân Mật (4 lệnh)",
+        value="`/kiss`, `/hug`, `/pat`, `/slap` *(+10 Điểm thân mật & Nâng cấp 5 bậc Nhẫn Cưới)*",
+        inline=False
+    )
+    embed.add_field(
+        name="⚙️ 6. Quản Trị & Cài Đặt (5 lệnh)",
+        value="`/settings view`, `/settings automod`, `/settings level`, `/setup-server`, `!sync`",
+        inline=False
+    )
+
+    embed.set_footer(text="SosaPy v1.7.0 • Chọn menu bên dưới để xem hướng dẫn từng mục!")
+    return embed
+
+
+class HelpSelect(discord.ui.Select):
+    """Menu chọn danh mục trợ giúp dạng Dropdown"""
+
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Tất Cả Lệnh (Tổng Quan)", description="Xem toàn bộ danh mục và tóm tắt lệnh", emoji="📌", value="all"),
+            discord.SelectOption(label="Âm Nhạc (Music)", description="Các lệnh nghe nhạc YouTube, SoundCloud, Spotify", emoji="🎵", value="music"),
+            discord.SelectOption(label="Voice TTS (Tiếng Việt)", description="Đọc văn bản thành giọng nói kênh thoại", emoji="🗣️", value="tts"),
+            discord.SelectOption(label="Cấp Độ & Rank (XP)", description="Thẻ Rank đồ họa Anime Gal Hiphop & Bảng vàng", emoji="⭐", value="rank"),
+            discord.SelectOption(label="Bói Duyên & Kết Hôn", description="Love Calculator & Ngôi Nhà Cặp Đôi 3 tab", emoji="💘", value="marry"),
+            discord.SelectOption(label="Tương Tác Thân Mật", description="Kiss, hug, pat, slap tăng điểm Nhẫn Cưới", emoji="✨", value="actions"),
+            discord.SelectOption(label="Quản Trị & Cài Đặt", description="Bật/Tắt AutoMod, Level, Setup Server, Sync", emoji="⚙️", value="admin"),
+        ]
+        super().__init__(placeholder="📂 Chọn danh mục tính năng để xem chi tiết...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        category = self.values[0]
+        embed = get_help_embed(category)
+        await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+class HelpView(discord.ui.View):
+    """Giao diện View chứa Menu Dropdown chọn danh mục trợ giúp"""
+
+    def __init__(self):
+        super().__init__(timeout=180.0)
+        self.add_item(HelpSelect())
+
+
 class General(commands.Cog):
-    """Module tính năng chung: Trợ giúp (/help), Cấp độ (/rank), Xếp hạng (/leaderboard) và Cài đặt (/settings)"""
+    """Module tính năng chung: Trợ giúp (/help & !help), Cấp độ (/rank), Xếp hạng (/leaderboard) và Cài đặt (/settings)"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -106,89 +276,15 @@ class General(commands.Cog):
         description="Xem danh sách đầy đủ tất cả các lệnh và hướng dẫn sử dụng bot"
     )
     async def help_command(self, interaction: discord.Interaction):
-        embed = discord.Embed(
-            title="📖 BẢNG HƯỚNG DẪN LỆNH SOSABOT",
-            description=(
-                "Chào mừng bạn đến với **SosaPy**! Dưới đây là danh sách toàn bộ các lệnh Slash Commands (`/`).\n"
-                "Bạn chỉ cần gõ `/` kèm tên lệnh để sử dụng."
-            ),
-            color=discord.Color.blue()
-        )
+        embed = get_help_embed("all")
+        view = HelpView()
+        await interaction.response.send_message(embed=embed, view=view)
 
-        embed.add_field(
-            name="🎵 Âm Nhạc (Music)",
-            value=(
-                "• `/play <query>`: Phát nhạc từ link (YouTube, SoundCloud, Spotify) hoặc gõ tên bài hát\n"
-                "• `/pause`: Tạm dừng bài hát đang phát\n"
-                "• `/resume`: Tiếp tục phát nhạc\n"
-                "• `/skip`: Bỏ qua bài hát hiện tại sang bài tiếp theo\n"
-                "• `/queue`: Xem danh sách bài hát đang chờ trong hàng đợi\n"
-                "• `/leave`: Đuổi bot rời phòng thoại và làm sạch hàng đợi"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="🗣️ Giao Tiếp Kênh Thoại (TTS)",
-            value="• `/speak <text>`: Đọc văn bản tiếng Việt thành giọng nói (dành cho người không mic, tối đa 300 ký tự)",
-            inline=False
-        )
-
-        embed.add_field(
-            name="⭐ Cấp Độ & Bảng Xếp Hạng (Level & Rank)",
-            value=(
-                "• `/rank [member]` (hoặc `!rank`): Xem Thẻ Rank đồ họa cá nhân cực xịn\n"
-                "• `/leaderboard`: Xem Bảng vàng Top 10 thành viên năng nổ nhất server"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="💘 Bói Tình Duyên & Cặp Đôi (Love & Marry)",
-            value=(
-                "• `/lovec <target>` (hoặc `!lovec`): Đo độ hợp nhau (hỗ trợ `random` ghép đôi ngẫu nhiên)\n"
-                "• `/marry <@user>` (hoặc `!marry`): Cầu hôn thành viên khác\n"
-                "• `/marry`: Mở Ngôi Nhà Cặp Đôi tương tác (Trang chủ, Album ảnh, Ghi chú)\n"
-                "• `/marry_name <tên>` (hoặc `!name`): Đổi tên ngôi nhà\n"
-                "• `/marry_quote <nội dung>` (hoặc `!quote`): Đổi châm ngôn tình yêu\n"
-                "• `/lgallery <1-6> <link>` (hoặc `!lgallery`): Thêm ảnh vào album kỷ niệm\n"
-                "• `/divorce` (hoặc `!divorce`): Ly hôn giải phóng ngôi nhà"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="✨ Tương Tác Thân Mật (Tăng Điểm Nhẫn Cưới)",
-            value=(
-                "• `/kiss`, `/hug`, `/pat`, `/slap` (hoặc `!kiss`, `!hug`...):\n"
-                "  Tương tác với người ấy để nhận +10 Điểm thân mật & nâng cấp Nhẫn Cưới"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="⚙️ Quản Trị & Cấu Hình Máy Chủ",
-            value=(
-                "• `/settings view`: Xem trạng thái các tính năng tự động (AutoMod, Level)\n"
-                "• `/settings automod <enable>`: BẬT hoặc TẮT tính năng AutoMod cho server\n"
-                "• `/settings level <enable>`: BẬT hoặc TẮT tính năng cộng điểm XP cho server\n"
-                "• `/setup-server [clear_old]`: Tự động tạo cấu trúc kênh, role theo template (3 bước xác nhận, chỉ Chủ Server)"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="👑 Lệnh Quản Trị Chủ Bot (Prefix !)",
-            value=(
-                "• `!sync guild`: Đồng bộ tức thì các lệnh slash vào server hiện tại\n"
-                "• `!reload <module>`: Tải lại module tính năng mà không cần tắt bot\n"
-                "• `!status`: Kiểm tra mức tiêu thụ RAM, CPU, ping và uptime"
-            ),
-            inline=False
-        )
-
-        embed.set_footer(text="SosaPy • Hệ thống âm nhạc & quản trị chuẩn mực")
-        await interaction.response.send_message(embed=embed)
+    @commands.command(name="help", description="Xem danh sách đầy đủ tất cả các lệnh (!help)")
+    async def help_prefix(self, ctx: commands.Context):
+        embed = get_help_embed("all")
+        view = HelpView()
+        await ctx.reply(embed=embed, view=view, mention_author=False)
 
     @app_commands.command(
         name="rank",
