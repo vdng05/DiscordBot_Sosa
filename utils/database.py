@@ -38,6 +38,7 @@ class DatabaseManager:
     def __init__(self, db_path: Path):
         self.db_path = Path(db_path)
         self._db: Optional[aiosqlite.Connection] = None
+        self._prefix_cache: Dict[str, str] = {}
 
     async def initialize(self):
         """Khởi tạo kết nối, bật chế độ WAL và tạo bảng tự động"""
@@ -170,6 +171,27 @@ class DatabaseManager:
             ON CONFLICT(guild_id) DO UPDATE SET {column} = excluded.{column};
         """, (str(guild_id), value))
         await self._db.commit()
+        if column == "prefix":
+            self._prefix_cache[str(guild_id)] = str(value)
+
+    async def get_prefix(self, guild_id: int) -> str:
+        """Lấy tiền tố lệnh (prefix) của một server (sử dụng in-memory cache)"""
+        gid = str(guild_id)
+        if gid in self._prefix_cache:
+            return self._prefix_cache[gid]
+
+        async with self._db.execute(
+            "SELECT prefix FROM guild_settings WHERE guild_id = ?",
+            (gid,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            prefix = row[0] if (row and row[0]) else "!"
+            self._prefix_cache[gid] = prefix
+            return prefix
+
+    async def set_prefix(self, guild_id: int, new_prefix: str):
+        """Thay đổi tiền tố lệnh của server"""
+        await self.update_guild_setting(guild_id, "prefix", new_prefix)
 
     # ==========================
     # HỆ THỐNG LEVEL / RANK

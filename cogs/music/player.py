@@ -9,9 +9,16 @@ logger = logging.getLogger("SosaBot.Music.Player")
 class MusicPlayer:
     """Quản lý hàng đợi và tác vụ phát nhạc độc lập theo từng Server (Guild)"""
 
-    def __init__(self, ctx: discord.Interaction):
-        self.bot = ctx.client
-        self.guild = ctx.guild
+    def __init__(self, bot_or_ctx, guild: discord.Guild = None):
+        if guild is not None:
+            self.bot = bot_or_ctx
+            self.guild = guild
+        elif hasattr(bot_or_ctx, 'client'):
+            self.bot = bot_or_ctx.client
+            self.guild = bot_or_ctx.guild
+        else:
+            self.bot = bot_or_ctx.bot
+            self.guild = bot_or_ctx.guild
         self.queue = []
 
         self.song_added = asyncio.Event()

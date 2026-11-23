@@ -10,7 +10,14 @@ from utils.database import DatabaseManager
 from utils.error_handler import global_app_command_error
 
 # Khởi tạo logger hệ thống
-logger = setup_logging("SosaBot")
+logger = setup_logging("SosaGallery")
+
+async def get_prefix(bot: commands.Bot, message: discord.Message):
+    """Xác định tiền tố lệnh động theo từng server từ SQLite Database"""
+    if not message.guild:
+        return Config.COMMAND_PREFIX
+    prefix = await bot.db.get_prefix(message.guild.id)
+    return commands.when_mentioned_or(prefix)(bot, message)
 
 class SosaBot(commands.Bot):
     """Lớp Bot chính kế thừa commands.Bot với cơ chế tự động nạp cogs, SQLite và quản lý tài nguyên"""
@@ -18,7 +25,7 @@ class SosaBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
         super().__init__(
-            command_prefix=Config.COMMAND_PREFIX,
+            command_prefix=get_prefix,
             intents=intents,
             help_command=None,
             owner_ids=set(Config.OWNER_IDS) if Config.OWNER_IDS else None
@@ -96,7 +103,7 @@ class SosaBot(commands.Bot):
         await self.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.listening,
-                name="/play | /speak | !sync"
+                name="SosaGallery | !help | /help"
             )
         )
 
@@ -111,15 +118,15 @@ class SosaBot(commands.Bot):
 
         if target_channel:
             embed = discord.Embed(
-                title="👋 CẢM ƠN BẠN ĐÃ MỜI SOSAPY VÀO SERVER!",
+                title="👋 CẢM ƠN BẠN ĐÃ MỜI SOSAGALLERY VÀO SERVER!",
                 description=(
-                    f"Xin chào **{guild.name}**! Tôi là bot hỗ trợ âm nhạc, giao tiếp giọng nói và quản trị máy chủ.\n\n"
-                    "🛡️ **Nguyên tắc tôn trọng quyền riêng tư của Server:**\n"
-                    "Để tránh tự tiện can thiệp hoặc làm phiền máy chủ, **tất cả tính năng tự động chạy ngầm (AutoMod, Level/Rank XP) ĐỀU ĐANG ĐƯỢC TẮT MẶC ĐỊNH**.\n\n"
-                    "👉 **Quản trị viên có thể gõ các lệnh sau để bắt đầu:**\n"
-                    "• `/settings`: Xem trạng thái và BẬT/TẮT các tính năng tự động mong muốn.\n"
-                    "• `/help`: Xem toàn bộ hướng dẫn sử dụng bot.\n"
-                    "• `/play`: Bắt đầu phát nhạc ngay lập tức."
+                    f"Xin chào **{guild.name}**! Mình là **SosaGallery** — bot âm nhạc, giải trí và kết nối bạn bè.\n\n"
+                    "🛡️ **Mặc định tính năng:** Để không làm phiền server, các tính năng tự động (chặn từ cấm, tính điểm level) đều đang tắt.\n\n"
+                    "👉 **Một số lệnh cơ bản để bạn làm quen:**\n"
+                    "• `/help` hoặc `!help`: Xem toàn bộ hướng dẫn sử dụng.\n"
+                    "• `/play <tên bài>` hoặc `!play <tên bài>`: Phát nhạc từ YouTube, Spotify (có các nút bấm tiện lợi).\n"
+                    "• `/say <nội dung>` hoặc `!say <nội dung>`: Nhờ bot đọc tiếng Việt trong phòng voice.\n"
+                    "• `/settings`: Dành cho Quản trị viên để bật tính năng tự động hoặc đổi prefix gọi lệnh."
                 ),
                 color=discord.Color.green()
             )

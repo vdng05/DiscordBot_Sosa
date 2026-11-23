@@ -1,7 +1,7 @@
-# 🤖 SosaPy — All-in-One Discord Bot
+# 🤖 SosaGallery — All-in-One Discord Bot
 
 <p align="center">
-  <b>Hệ thống Discord Bot đa chức năng, kiến trúc từng tính năng một thư mục riêng biệt (Feature-Folder Architecture), tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode) siêu nhẹ và tối ưu cho VPS.</b>
+  <b>Hệ thống Discord Bot đa chức năng, kiến trúc từng tính năng một thư mục riêng biệt (Feature-Folder Architecture), tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode) siêu nhẹ, hỗ trợ đồ họa canvas Anime/Gal và tối ưu cho VPS.</b>
 </p>
 
 <p align="center">
@@ -303,10 +303,11 @@ docker compose up -d --build
 ---
 
 ### 7.2. Nhóm Lệnh Chung, Cài Đặt & Thẻ Rank Đồ Họa (/help, /rank, /leaderboard, /settings)
-- `/help`: Xem hướng dẫn sử dụng và danh sách toàn bộ các câu lệnh của bot phân theo từng danh mục.
+- `/help` (hoặc `!help`): Xem hướng dẫn sử dụng và danh sách toàn bộ câu lệnh của bot (hỗ trợ hiển thị song song cả cú pháp Slash Command `/` và Prefix `!`).
 - `/rank [member]` (hoặc `!rank [@member]`): **Thẻ Rank đồ họa phong cách Chibi Gal Hiphop Neon cực đỉnh!** Vẽ trực tiếp bằng Canvas (Pillow) với avatar bo tròn viền phát sáng kép, cấp độ, thứ hạng server, điểm kinh nghiệm XP và thanh tiến trình thăng cấp neon rực rỡ.
-- `/leaderboard`: Xem Bảng vàng Top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server (truy vấn SQLite siêu tốc).
-- `/settings view`: Xem bảng trạng thái BẬT/TẮT hiện tại của các tính năng tự động chạy ngầm trên máy chủ.
+- `/leaderboard` (hoặc `!leaderboard` / `!top`): Xem Bảng vàng Top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server (truy vấn SQLite siêu tốc).
+- `/settings view`: Xem bảng trạng thái BẬT/TẮT hiện tại của các tính năng tự động chạy ngầm trên máy chủ và tiền tố lệnh đang dùng.
+- `/settings prefix <ký_tự>` (hoặc `!prefix <ký_tự>`): Đổi tiền tố gõ lệnh của bot trên server (ví dụ: `$`, `.`, `?`).
 - `/settings automod <enable>`: BẬT hoặc TẮT bộ lọc từ cấm, link rác và chống spam.
 - `/settings level <enable>`: BẬT hoặc TẮT hệ thống tính điểm kinh nghiệm (XP) khi chat.
 
@@ -356,19 +357,25 @@ Hệ thống lấy cảm hứng từ Lunari Bot nhưng được nâng cấp toà
 
 ---
 
-### 7.5. Nhóm Âm Nhạc (Music)
-- `/play <query>`: Phát nhạc từ đường link (YouTube, SoundCloud, Spotify) hoặc gõ từ khóa tìm kiếm bài hát.
-- `/pause`: Tạm dừng bài hát đang phát trong phòng thoại.
-- `/resume`: Tiếp tục phát bài hát đang bị tạm dừng.
-- `/skip`: Bỏ qua bài hát hiện tại và tự động chuyển sang bài tiếp theo trong hàng đợi.
-- `/queue`: Xem danh sách các bài hát đang chờ phát trong hàng đợi của máy chủ.
-- `/leave`: Yêu cầu bot ngắt kết nối khỏi kênh thoại và làm sạch hàng đợi.
+### 7.5. Nhóm Âm Nhạc (Music) & Giao Diện Nút Bấm Điều Khiển
+Hỗ trợ đầy đủ cả **Lệnh Gạch Chéo (`/`)**, **Lệnh Tiền Tố (`!`)**, và **4 Nút Bấm Trực Tiếp** dưới tin nhắn bot:
+- **4 Nút Bấm Tiện Lợi (Không Cần Gõ Lệnh):**
+  - ⏯️ **Tạm Dừng / Tiếp Tục:** Tạm dừng bài hát đang nghe hoặc nghe tiếp.
+  - ⏭️ **Chuyển Bài:** Bỏ qua bài hát hiện tại và sang bài tiếp theo.
+  - 📜 **Xem Hàng Đợi:** Xem danh sách bài hát đang chờ (chỉ bạn nhìn thấy).
+  - ⏹️ **Dừng & Thoát:** Tắt nhạc và mời bot rời khỏi phòng thoại.
+- `/play <query>` (hoặc `!play <tên/link>`, `!p`): Phát nhạc từ đường link (YouTube, SoundCloud, Spotify) hoặc tìm kiếm theo tên bài hát.
+- `/pause` (hoặc `!pause`): Tạm dừng bài hát đang phát trong phòng thoại.
+- `/resume` (hoặc `!resume`): Tiếp tục phát bài hát đang bị tạm dừng.
+- `/skip` (hoặc `!skip`, `!s`): Bỏ qua bài hát hiện tại và tự động chuyển sang bài tiếp theo trong hàng đợi.
+- `/queue` (hoặc `!queue`, `!q`): Xem danh sách các bài hát đang chờ phát trong hàng đợi của máy chủ.
+- `/leave` (hoặc `!leave`, `!stop`): Yêu cầu bot ngắt kết nối khỏi kênh thoại và làm sạch hàng đợi.
 - **Tự động tiết kiệm tài nguyên:** Nếu tất cả người dùng rời khỏi phòng (chỉ còn bot) hoặc sau 5 phút không có bài hát mới, bot sẽ tự động ngắt kết nối để giải phóng RAM và CPU.
 
 ---
 
-### 7.6. Nhóm Giao Tiếp Voice (TTS)
-- `/speak <text>`: Chuyển văn bản tiếng Việt thành giọng nói trong kênh thoại (tối đa 300 ký tự).
+### 7.6. Nhóm Giao Tiếp Voice (Say / TTS)
+- `/say <text>` (hoặc `!say <nội dung>`, alias `/speak`, `!speak`): Chuyển văn bản tiếng Việt thành giọng nói trong kênh thoại (tối đa 300 ký tự).
 - **Điều phối âm thanh thông minh:** Nếu đang phát nhạc, bot sẽ tự động lưu lại bài hát đang nghe dở, đọc thông báo TTS xong rồi mới tiếp tục phát nhạc, không gây xung đột âm thanh `Already playing audio`.
 
 ---
@@ -404,14 +411,9 @@ Hệ thống lấy cảm hứng từ Lunari Bot nhưng được nâng cấp toà
 
 | Phiên bản | Ngày cập nhật | Người thực hiện | Nội dung chi tiết |
 | :---: | :---: | :---: | :--- |
+| **v1.8.0** | 2026-11-23 | Antigravity & User | **Đổi tên bot thành SosaGallery, Nút bấm Music & Nâng cấp Help:**<br>• Đổi tên định danh bot thành **SosaGallery** trên toàn bộ hệ thống giao diện và log.<br>• Chuyển lệnh Voice TTS chính sang `/say` và `!say` (với alias `/speak`, `!speak`).<br>• Bổ sung nhóm nút bấm tương tác trực tiếp `MusicControlView` (⏯️ Tạm dừng/Tiếp tục, ⏭️ Bỏ qua, 📜 Xem hàng đợi, ⏹️ Dừng & Thoát) không cần gõ lệnh.<br>• Thêm tính năng đổi tiền tố lệnh cho từng server qua `/settings prefix` và `!prefix`.<br>• Viết lại toàn bộ hệ thống `/help` và `!help` với văn phong hướng dẫn người dùng thân thiện, dễ hiểu, hiển thị song song cả cú pháp Slash Command và Prefix. |
 | **v1.7.0** | 2026-11-23 | Antigravity & User | **Hệ thống Marry House, Bói Tình Duyên & Thẻ Rank Canvas Đồ Họa:**<br>• Tích hợp bộ vẽ hình ảnh trực tiếp qua RAM với Pillow (`utils/canvas.py`): Thẻ Rank Chibi Gal Hiphop Neon và Banner Love Calculator Lunari-style pastel cute.<br>• Bổ sung module `cogs/marry/`: Lệnh `/lovec` (hỗ trợ `random` ghép đôi cùng server), `/marry` cầu hôn tương tác 💍, giao diện Ngôi Nhà Cặp Đôi 3 Tab (Trang Chủ, Album 6 ảnh, Ghi Chú).<br>• Lệnh tương tác tình cảm: `/kiss`, `/hug`, `/pat`, `/slap` tích lũy điểm thân mật (+10đ) và tự động nâng cấp 5 bậc Nhẫn Cưới.<br>• Mở rộng SQLite với bảng `marriages` và các hàm truy vấn quan hệ hôn nhân. |
 | **v1.6.0** | 2026-11-23 | Antigravity & User | **Mặc định TẮT tính năng tự động khi vào server mới & Nhóm lệnh /settings:**<br>• Lắng nghe sự kiện `on_guild_join`: Tự động lưu cấu hình server vào SQLite với trạng thái TẮT toàn bộ tính năng tự động (AutoMod, Level/XP) để tôn trọng quyền riêng tư.<br>• Bổ sung nhóm lệnh `/settings` (`view`, `automod`, `level`) cho Quản trị viên chủ động BẬT/TẮT từng tính năng theo nhu cầu.<br>• Phân tách rạch ròi giữa lệnh chủ động (Slash Commands) và tiến trình chạy ngầm thời gian thực (Background Listeners). |
-| **v1.5.0** | 2026-11-23 | Antigravity & User | **Xác thực 3 Bước & Hoàn thiện Slash Commands:**<br>• Nâng cấp `/setup-server` với quy trình xác thực 3 lần qua nút bấm tương tác (ConfirmationStepView), loại bỏ hoàn toàn Master Key.<br>• Bổ sung module `cogs/general/` với các lệnh `/help`, `/rank`, `/leaderboard`.<br>• Rà soát và cập nhật đầy đủ mô tả chi tiết, rõ ràng cho tất cả 11 Slash Commands.<br>• Tích hợp tính năng tự động thoát phòng thoại khi phòng trống người. |
-| **v1.4.0** | 2026-11-23 | Antigravity & User | **Tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode):** Xây dựng `DatabaseManager`, lệnh Admin `!sync`, `!reload`, `!status`, xử lý lỗi tập trung. |
-| **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:** Đồng bộ hóa Voice giữa TTS và Music, chuyển I/O sang `asyncio.to_thread`. |
-| **v1.2.0** | 2026-11-23 | Antigravity & User | **Tái cấu trúc Feature-Folder:** Tách mỗi tính năng thành 1 folder riêng trong `cogs/`. |
-| **v1.1.0** | 2026-11-23 | Antigravity & User | **Chuẩn hóa Enterprise Architecture:** Tách `.env`, `config.py`, `utils/logger.py`. |
-| **v1.0.0** | 2026-07-10 | User | **Khởi tạo dự án ban đầu:** 4 cogs phẳng cơ bản. |
 | **v1.5.0** | 2026-11-23 | Antigravity & User | **Xác thực 3 Bước & Hoàn thiện Slash Commands:**<br>• Nâng cấp `/setup-server` với quy trình xác thực 3 lần qua nút bấm tương tác (ConfirmationStepView), loại bỏ hoàn toàn Master Key.<br>• Bổ sung module `cogs/general/` với các lệnh `/help`, `/rank`, `/leaderboard`.<br>• Rà soát và cập nhật đầy đủ mô tả chi tiết, rõ ràng cho tất cả 11 Slash Commands.<br>• Tích hợp tính năng tự động thoát phòng thoại khi phòng trống người. |
 | **v1.4.0** | 2026-11-23 | Antigravity & User | **Tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode):** Xây dựng `DatabaseManager`, lệnh Admin `!sync`, `!reload`, `!status`, xử lý lỗi tập trung. |
 | **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:** Đồng bộ hóa Voice giữa TTS và Music, chuyển I/O sang `asyncio.to_thread`. |
@@ -424,7 +426,7 @@ Hệ thống lấy cảm hứng từ Lunari Bot nhưng được nâng cấp toà
 ## 10. Kế Hoạch Phát Triển (Roadmap)
 
 - [x] **Lệnh xem bảng xếp hạng `/leaderboard` & xem cấp độ `/rank`:** Tích hợp trực tiếp từ SQLite Database.
-- [ ] **Interactive Buttons cho Music:** Thêm hàng nút Pause, Resume, Skip, Stop trực tiếp dưới tin nhắn phản hồi của `/play`.
+- [x] **Interactive Buttons cho Music:** Thêm hàng nút Pause, Resume, Skip, Stop trực tiếp dưới tin nhắn phản hồi của `/play`.
 - [ ] **Hệ thống Welcome Banner:** Tạo ảnh thẻ chào mừng tự động lưu ảnh tạm trong `temp/`.
 - [ ] **Hệ thống Ticket:** Mở kênh chat riêng với Ban Quản Trị bằng Discord Button.
 
