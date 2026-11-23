@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C environments
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Configuration & Secrets (RẤT QUAN TRỌNG - KHÔNG ĐƯỢC COMMIT)
+.env
+
+# Logs
+logs/
+*.log
+
+# Temporary Audio & Files
+temp/
+*.mp3
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# IDE Files
+.vscode/
+.idea/

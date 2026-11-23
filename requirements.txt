@@ -1,0 +1,14 @@
+# Thư viện chính cho Discord Bot
+discord.py>=2.3.2
+
+# Hỗ trợ Voice (Bắt buộc cho kênh thoại và phát nhạc)
+PyNaCl>=1.5.0
+
+# Hỗ trợ tải và trích xuất luồng âm thanh YouTube, SoundCloud, v.v.
+yt-dlp>=2024.0.0
+
+# Text-to-Speech (Chuyển văn bản thành giọng nói tiếng Việt)
+gTTS>=2.5.0
+
+# Quản lý cấu hình & biến môi trường từ file .env
+python-dotenv>=1.0.0

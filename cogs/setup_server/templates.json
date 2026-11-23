@@ -1,0 +1,53 @@
+{
+  "THÔNG-TIN-CHUNG": {
+    "type": "category",
+    "permission": "read_only",
+    "channels": [
+      { "name": "📜︱server-rules", "type": "text" },
+      { "name": "📢︱notification", "type": "text" },
+      { "name": "🎭︱bấm-nhận-role", "type": "text" }
+    ]
+  },
+  "STAFF": {
+    "type": "category",
+    "permission": "private",
+    "channels": [
+      { "name": "🛡️︱staff", "type": "text" }
+    ]
+  },
+  "CHAT": {
+    "type": "category",
+    "permission": "public",
+    "channels": [
+      { "name": "💬︱main-chat", "type": "text" },
+      { "name": "🌟︱welcome", "type": "text" },
+      { "name": "🎵︱music", "type": "text" },
+      { "name": "📸｜m𝒆𝒅𝒊𝒂", "type": "text" }
+    ]
+  },
+  "VUI-VE": {
+    "type": "category",
+    "permission": "public",
+    "channels": [
+      { "name": "👾︱gọi-bot-nhạc", "type": "text" },
+      { "name": "🤖︱owo-spam-bot", "type": "text" },
+      { "name": "🔢︱đếm-số-vô-tri", "type": "text" }
+    ]
+  },
+  "ROOM ADMIN": {
+    "type": "category",
+    "permission": "private",
+    "channels": [
+      { "name": "🔒 Admin Room", "type": "voice" },
+      { "name": "🍵 Trà Đạo", "type": "voice" }
+    ]
+  },
+  "PHÒNG TIẾP KHÁCH": {
+    "type": "category",
+    "permission": "public",
+    "channels": [
+      { "name": "🎤 Chung", "type": "voice" },
+      { "name": "➕ Nhấn để tạo phòng", "type": "voice" }
+    ]
+  }
+}
