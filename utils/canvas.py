@@ -36,8 +36,19 @@ def get_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
+def create_smooth_circle_mask(size: Tuple[int, int]) -> Image.Image:
+    """Tạo mask hình tròn siêu mịn với kỹ thuật 4x Supersampling khử hoàn toàn răng cưa (Anti-aliasing)"""
+    scale = 4
+    big_size = (size[0] * scale, size[1] * scale)
+    big_mask = Image.new("L", big_size, 0)
+    big_draw = ImageDraw.Draw(big_mask)
+    big_draw.ellipse((0, 0, big_size[0] - 1, big_size[1] - 1), fill=255)
+    return big_mask.resize(size, Image.Resampling.LANCZOS)
+
+
 async def fetch_avatar_image(avatar_url: str, size: Tuple[int, int] = (128, 128)) -> Image.Image:
-    """Tải avatar của người dùng qua URL và chuyển thành ảnh bo tròn kèm viền"""
+    """Tải avatar của người dùng qua URL và chuyển thành ảnh bo tròn siêu mượt không răng cưa"""
+    mask = create_smooth_circle_mask(size)
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(avatar_url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
@@ -45,11 +56,6 @@ async def fetch_avatar_image(avatar_url: str, size: Tuple[int, int] = (128, 128)
                     data = await resp.read()
                     avatar = Image.open(io.BytesIO(data)).convert("RGBA")
                     avatar = avatar.resize(size, Image.Resampling.LANCZOS)
-
-                    # Tạo mask tròn
-                    mask = Image.new("L", size, 0)
-                    mask_draw = ImageDraw.Draw(mask)
-                    mask_draw.ellipse((0, 0, size[0], size[1]), fill=255)
 
                     output = Image.new("RGBA", size, (0, 0, 0, 0))
                     output.paste(avatar, (0, 0), mask=mask)
@@ -59,9 +65,6 @@ async def fetch_avatar_image(avatar_url: str, size: Tuple[int, int] = (128, 128)
 
     # Tạo avatar mặc định nếu không tải được
     fallback = Image.new("RGBA", size, (130, 130, 200, 255))
-    mask = Image.new("L", size, 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.ellipse((0, 0, size[0], size[1]), fill=255)
     output = Image.new("RGBA", size, (0, 0, 0, 0))
     output.paste(fallback, (0, 0), mask=mask)
     return output
@@ -124,25 +127,26 @@ async def draw_love_calculator(
             W, H = template.size
             base = Image.new("RGBA", (W, H), (255, 255, 255, 255))
 
-            # 1. Tải 2 Avatar người dùng
+            # 1. Tải 2 Avatar người dùng siêu mịn
             av1 = await fetch_avatar_image(avatar1_url, (130, 130))
-            av2 = await fetch_avatar_image(avatar2_url, (126, 126))
+            av2 = await fetch_avatar_image(avatar2_url, (127, 127))
 
-            # 2. Dán avatar dưới template để mũ / tai nghe / cánh dơi viền đè lên tự nhiên
+            # 2. Dán avatar dưới template để viền, tai nghe, mũ và cánh dơi đè lên tự nhiên
             base.paste(av1, (185, 115), mask=av1)
             base.paste(av2, (704, 117), mask=av2)
 
-            # 3. Phủ template lên trên
+            # 3. Vẽ thanh tiến trình tình yêu DƯỚI template (để khung viền và chữ LOVE luôn ở trên cùng)
+            draw_base = ImageDraw.Draw(base)
+            bar_x = 346
+            bar_y = 352
+            bar_max_w = 374
+            bar_h = 35
+            fill_w = max(int(bar_max_w * (percentage / 100)), 20)
+            draw_base.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), radius=17, fill=(255, 75, 140))
+
+            # 4. Phủ template lên trên (bảo vệ tuyệt đối khung viền và chữ LOVE)
             base.alpha_composite(template)
             draw = ImageDraw.Draw(base)
-
-            # 4. Vẽ thanh tiến trình tình yêu vào rãnh đáy
-            bar_x = 292
-            bar_y = 348
-            bar_max_w = 416
-            bar_h = 38
-            fill_w = max(int(bar_max_w * (percentage / 100)), 20)
-            draw.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), radius=19, fill=(255, 70, 135))
 
             # 5. In tên 2 người vào khung trắng phía dưới avatar
             font_name = get_font(20, bold=True)
