@@ -6,10 +6,99 @@ import logging
 logger = logging.getLogger("SosaBot.General")
 
 class General(commands.Cog):
-    """Module tính năng chung: Trợ giúp (/help), Cấp độ (/rank) và Bảng xếp hạng (/leaderboard)"""
+    """Module tính năng chung: Trợ giúp (/help), Cấp độ (/rank), Xếp hạng (/leaderboard) và Cài đặt (/settings)"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    # Nhóm lệnh /settings dành cho Quản trị viên Server
+    settings_group = app_commands.Group(
+        name="settings",
+        description="Quản lý và BẬT/TẮT các tính năng tự động chạy ngầm của máy chủ (Chỉ dành cho Admin)"
+    )
+
+    @settings_group.command(
+        name="view",
+        description="Xem bảng trạng thái BẬT/TẮT hiện tại của các tính năng tự động trên máy chủ"
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def settings_view(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        guild_id = interaction.guild.id
+        settings = await self.bot.db.get_guild_settings(guild_id)
+
+        automod_status = "🟢 **ĐANG BẬT**" if settings.get("automod_enabled") else "🔴 **ĐANG TẮT (Mặc định)**"
+        level_status = "🟢 **ĐANG BẬT**" if settings.get("level_system_enabled") else "🔴 **ĐANG TẮT (Mặc định)**"
+
+        embed = discord.Embed(
+            title=f"⚙️ CẤU HÌNH TÍNH NĂNG — {interaction.guild.name}",
+            description=(
+                "Khi bot mới vào server, tất cả tính năng chạy ngầm đều **mặc định TẮT** để tôn trọng sự riêng tư của server.\n"
+                "Quản trị viên có thể dùng các lệnh dưới đây để BẬT hoặc TẮT tùy ý."
+            ),
+            color=discord.Color.blue()
+        )
+
+        embed.add_field(
+            name="🛡️ AutoMod (Lọc từ cấm, link rác, chống spam)",
+            value=f"Trạng thái: {automod_status}\n*Lệnh đổi:* `/settings automod <enable>`",
+            inline=False
+        )
+
+        embed.add_field(
+            name="⭐ Hệ Thống Level / Rank (Cộng XP khi chat)",
+            value=f"Trạng thái: {level_status}\n*Lệnh đổi:* `/settings level <enable>`",
+            inline=False
+        )
+
+        embed.set_footer(text="Cấu hình được lưu tự động theo từng server trên SQLite Database")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @settings_group.command(
+        name="automod",
+        description="BẬT hoặc TẮT tính năng tự động lọc từ cấm, link rác và chống spam"
+    )
+    @app_commands.describe(
+        enable="Chọn True để BẬT AutoMod, False để TẮT AutoMod"
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def settings_automod(self, interaction: discord.Interaction, enable: bool):
+        await interaction.response.defer(ephemeral=True)
+        guild_id = interaction.guild.id
+
+        await self.bot.db.update_guild_setting(guild_id, "automod_enabled", 1 if enable else 0)
+        status_text = "🟢 **ĐÃ BẬT**" if enable else "🔴 **ĐÃ TẮT**"
+
+        embed = discord.Embed(
+            title="⚙️ CẬP NHẬT AUTOMOD THÀNH CÔNG",
+            description=f"Tính năng **AutoMod (Chống spam, lọc link rác & từ cấm)** hiện tại: {status_text} cho máy chủ này.",
+            color=discord.Color.green() if enable else discord.Color.red()
+        )
+        logger.info(f"[{interaction.guild.name}] {interaction.user} đã chuyển AutoMod thành: {enable}")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @settings_group.command(
+        name="level",
+        description="BẬT hoặc TẮT hệ thống tính điểm kinh nghiệm (XP) và thông báo lên cấp khi chat"
+    )
+    @app_commands.describe(
+        enable="Chọn True để BẬT hệ thống Level/XP, False để TẮT"
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def settings_level(self, interaction: discord.Interaction, enable: bool):
+        await interaction.response.defer(ephemeral=True)
+        guild_id = interaction.guild.id
+
+        await self.bot.db.update_guild_setting(guild_id, "level_system_enabled", 1 if enable else 0)
+        status_text = "🟢 **ĐÃ BẬT**" if enable else "🔴 **ĐÃ TẮT**"
+
+        embed = discord.Embed(
+            title="⚙️ CẬP NHẬT HỆ THỐNG LEVEL THÀNH CÔNG",
+            description=f"Tính năng **Level / Rank XP** hiện tại: {status_text} cho máy chủ này.",
+            color=discord.Color.green() if enable else discord.Color.red()
+        )
+        logger.info(f"[{interaction.guild.name}] {interaction.user} đã chuyển Level System thành: {enable}")
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     @app_commands.command(
         name="help",
@@ -54,8 +143,13 @@ class General(commands.Cog):
         )
 
         embed.add_field(
-            name="⚙️ Quản Trị Server (Dành cho Chủ Server)",
-            value="• `/setup-server [clear_old]`: Tự động tạo cấu trúc kênh, role theo template chuẩn (Bảo vệ qua 3 bước xác thực)",
+            name="⚙️ Quản Trị & Cấu Hình Máy Chủ",
+            value=(
+                "• `/settings view`: Xem trạng thái các tính năng tự động (AutoMod, Level)\n"
+                "• `/settings automod <enable>`: BẬT hoặc TẮT tính năng AutoMod cho server\n"
+                "• `/settings level <enable>`: BẬT hoặc TẮT tính năng cộng điểm XP cho server\n"
+                "• `/setup-server [clear_old]`: Tự động tạo cấu trúc kênh, role theo template (3 bước xác nhận, chỉ Chủ Server)"
+            ),
             inline=False
         )
 
@@ -84,7 +178,6 @@ class General(commands.Cog):
         guild_id = interaction.guild.id
         user_id = target.id
 
-        # Truy vấn dữ liệu Level từ SQLite
         async with self.bot.db._db.execute(
             "SELECT xp, level FROM user_levels WHERE guild_id = ? AND user_id = ?",
             (str(guild_id), str(user_id))

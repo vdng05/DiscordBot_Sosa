@@ -100,6 +100,35 @@ class SosaBot(commands.Bot):
             )
         )
 
+    async def on_guild_join(self, guild: discord.Guild):
+        """Kích hoạt khi bot được mời vào server mới: Tự động đăng ký với trạng thái TẮT TẤT CẢ TÍNH NĂNG TỰ ĐỘNG"""
+        logger.info(f"Bot vừa tham gia Server mới: {guild.name} (ID: {guild.id}) - Thành viên: {guild.member_count}")
+        await self.db.register_guild(guild.id)
+
+        target_channel = guild.system_channel
+        if not target_channel:
+            target_channel = next((ch for ch in guild.text_channels if ch.permissions_for(guild.me).send_messages), None)
+
+        if target_channel:
+            embed = discord.Embed(
+                title="👋 CẢM ƠN BẠN ĐÃ MỜI SOSAPY VÀO SERVER!",
+                description=(
+                    f"Xin chào **{guild.name}**! Tôi là bot hỗ trợ âm nhạc, giao tiếp giọng nói và quản trị máy chủ.\n\n"
+                    "🛡️ **Nguyên tắc tôn trọng quyền riêng tư của Server:**\n"
+                    "Để tránh tự tiện can thiệp hoặc làm phiền máy chủ, **tất cả tính năng tự động chạy ngầm (AutoMod, Level/Rank XP) ĐỀU ĐANG ĐƯỢC TẮT MẶC ĐỊNH**.\n\n"
+                    "👉 **Quản trị viên có thể gõ các lệnh sau để bắt đầu:**\n"
+                    "• `/settings`: Xem trạng thái và BẬT/TẮT các tính năng tự động mong muốn.\n"
+                    "• `/help`: Xem toàn bộ hướng dẫn sử dụng bot.\n"
+                    "• `/play`: Bắt đầu phát nhạc ngay lập tức."
+                ),
+                color=discord.Color.green()
+            )
+            embed.set_footer(text="SosaPy • Cấu hình đã được lưu an toàn trên SQLite")
+            try:
+                await target_channel.send(embed=embed)
+            except discord.HTTPException:
+                pass
+
     async def close(self):
         """Dọn dẹp và đóng an toàn database khi bot dừng hoạt động"""
         logger.info("Đang đóng các dịch vụ của bot...")
