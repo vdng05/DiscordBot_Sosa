@@ -244,7 +244,6 @@ docker compose up -d --build
 | `OWNER_IDS` | *Rỗng* | ID tài khoản Discord của bạn (để sử dụng lệnh `!sync`, `!reload`). |
 | `COMMAND_PREFIX` | `!` | Tiền tố lệnh quản trị (dành cho các lệnh `!sync`, `!reload`). |
 | `SYNC_ON_STARTUP`| `false` | **Khuyên dùng false**: Không tự động sync khi restart để tránh bị Discord khóa API (Rate Limit). Dùng lệnh `!sync` khi cần. |
-| `SETUP_MASTER_KEY`| `sosa_secure_master_key_2026` | Mã bảo mật cấp cao nhập qua hộp thoại Modal cho `/setup-server`. |
 | `TTS_MAX_LENGTH` | `300` | Giới hạn số lượng ký tự tối đa cho mỗi lần đọc `/speak` (chống spam âm thanh). |
 | `BAD_WORDS` | `từ_cấm_1,toxic` | Danh sách từ cấm ngăn chặn qua AutoMod. |
 | `SPAM_LIMIT` | `5` | Số tin nhắn tối đa gửi trong `SPAM_TIME` giây trước khi bị timeout. |
@@ -261,35 +260,43 @@ docker compose up -d --build
 - `!sync guild`: Đồng bộ toàn bộ Slash Commands vào Server hiện tại ngay tức thì (dùng khi thử nghiệm tính năng mới mà không lo dính Rate Limit).
 - `!sync global`: Đồng bộ toàn bộ Slash Commands ra toàn cầu (Discord mất khoảng 1-10 phút để hiển thị trên tất cả server).
 - `!reload <module>`: Tải lại tức thì một module cog (ví dụ: `!reload music` hoặc `!reload automod`) mà không cần tắt bot, không làm gián đoạn phòng nghe nhạc.
-- `!botstatus`: Kiểm tra Ping mạng, mức chiếm dụng RAM (MB), thời gian hoạt động liên tục (Uptime) và trạng thái SQLite.
+- `!status`: Kiểm tra Ping mạng, mức chiếm dụng RAM (MB), thời gian hoạt động liên tục (Uptime) và trạng thái SQLite.
 
 ---
 
-### 7.2. Nhóm Âm Nhạc (Music)
-- `/play <query>`: Phát nhạc từ link YouTube, SoundCloud, Spotify hoặc tìm kiếm từ khóa.
-- `/pause`: Tạm dừng bài hát.
-- `/resume`: Tiếp tục phát nhạc.
-- `/skip`: Chuyển sang bài kế tiếp trong danh sách chờ.
-- `/queue`: Hiển thị danh sách các bài hát trong hàng đợi.
-- `/leave`: Rời khỏi kênh thoại và làm sạch bộ nhớ.
+### 7.2. Nhóm Lệnh Chung (/help, /rank, /leaderboard)
+- `/help`: Xem hướng dẫn sử dụng và danh sách toàn bộ các câu lệnh của bot (phân theo từng danh mục kèm mô tả chi tiết).
+- `/rank [member]`: Xem cấp độ (Level), điểm kinh nghiệm (XP) hiện tại và thanh tiến trình thăng cấp của bạn hoặc thành viên khác.
+- `/leaderboard`: Xem Bảng vàng Top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server.
+
+---
+
+### 7.3. Nhóm Âm Nhạc (Music)
+- `/play <query>`: Phát nhạc từ đường link (YouTube, SoundCloud, Spotify) hoặc gõ từ khóa tìm kiếm bài hát.
+- `/pause`: Tạm dừng bài hát đang phát trong phòng thoại.
+- `/resume`: Tiếp tục phát bài hát đang bị tạm dừng.
+- `/skip`: Bỏ qua bài hát hiện tại và tự động chuyển sang bài tiếp theo trong hàng đợi.
+- `/queue`: Xem danh sách các bài hát đang chờ phát trong hàng đợi của máy chủ.
+- `/leave`: Yêu cầu bot ngắt kết nối khỏi kênh thoại và làm sạch hàng đợi.
 - **Tự động tiết kiệm tài nguyên:** Nếu tất cả người dùng rời khỏi phòng (chỉ còn bot) hoặc sau 5 phút không có bài hát mới, bot sẽ tự động ngắt kết nối để giải phóng RAM và CPU.
 
 ---
 
-### 7.3. Nhóm Giao Tiếp Voice (TTS)
-- `/speak <text>`: Chuyển văn bản thành giọng nói tiếng Việt trong kênh thoại (tối đa 300 ký tự).
+### 7.4. Nhóm Giao Tiếp Voice (TTS)
+- `/speak <text>`: Chuyển văn bản tiếng Việt thành giọng nói trong kênh thoại (tối đa 300 ký tự).
 - **Điều phối âm thanh thông minh:** Nếu đang phát nhạc, bot sẽ tự động lưu lại bài hát đang nghe dở, đọc thông báo TTS xong rồi mới tiếp tục phát nhạc, không gây xung đột âm thanh `Already playing audio`.
 
 ---
 
-### 7.4. Nhóm Thiết Lập Server Bảo Mật Modal (/setup-server)
-- `/setup-server [clear_old]`: Bật hộp thoại **Discord Modal** bí mật yêu cầu nhập `Master Key`.
-- **An toàn tuyệt đối:** Mã bảo mật không hiển thị trên khung chat Discord.
+### 7.5. Nhóm Thiết Lập Server 3 Bước Xác Nhận (/setup-server)
+- `/setup-server [clear_old]`: Khởi tạo toàn bộ cấu trúc Danh mục, Kênh và Quyền theo template mẫu chuẩn.
+- **Xác thực 3 Bước nghiêm ngặt:** Chỉ duy nhất **Chủ Server (Server Owner)** mới có quyền thực thi. Hệ thống yêu cầu xác nhận lần lượt qua 3 nút bấm tương tác (Bước 1: Giới thiệu quy mô $\rightarrow$ Bước 2: Cảnh báo mất dữ liệu cũ $\rightarrow$ Bước 3: Xác nhận tối hậu 100%).
+- **Loại bỏ Master Key:** Hoàn toàn không cần ghi nhớ hay nhập mật mã thủ công, bảo vệ tối cao dựa trên quyền sở hữu Guild Owner.
 - **Chống Rate Limit:** Quá trình xóa và tạo Category/Channel có độ trễ 0.3s đảm bảo không bị lỗi dở dang do Discord giới hạn tần suất tạo phòng.
 
 ---
 
-### 7.5. Nhóm Quản Trị Tự Động & Level/Rank (AutoMod)
+### 7.6. Nhóm Quản Trị Tự Động & Level/Rank (AutoMod)
 - **Lọc từ cấm:** Tự động xóa tin nhắn vi phạm và nhắc nhở 5s.
 - **Lọc link có Whitelist:** Chặn các liên kết ngoài, nhưng cho phép gửi link YouTube/SoundCloud/Spotify trong các kênh âm nhạc hoặc media.
 - **Chống Spam:** Tự động phát hiện spam và phạt timeout 5 phút, tự động giải phóng bộ nhớ RAM.
@@ -312,8 +319,9 @@ docker compose up -d --build
 
 | Phiên bản | Ngày cập nhật | Người thực hiện | Nội dung chi tiết |
 | :---: | :---: | :---: | :--- |
-| **v1.4.0** | 2026-11-23 | Antigravity & User | **Nâng cấp Hệ thống Toàn diện & Tích hợp SQLite:**<br>• Tích hợp SQLite bất đồng bộ (`aiosqlite`) với chế độ WAL Mode siêu nhẹ, tối ưu cho VPS.<br>• Tích hợp hệ thống Level / Rank thời gian thực lưu trong SQLite.<br>• Xây dựng `cogs/admin/` với lệnh `!sync` (chống Rate Limit restart), `!reload` (hot reload) và `!botstatus`.<br>• Bảo mật `/setup-server` bằng hộp thoại Discord Modal ẩn mật khẩu.<br>• Thêm bộ xử lý lỗi tập trung `utils/error_handler.py` hiển thị Embed kèm Error ID.<br>• Bổ sung tính năng tự thoát phòng khi không còn người nghe (`on_voice_state_update`).<br>• Thêm Whitelist kênh nhạc/media trong AutoMod.<br>• Tự dọn dẹp file rác trong `temp/` khi khởi động.<br>• Thêm `Dockerfile` và `docker-compose.yml` cho VPS.<br>• Chuyển đổi toàn bộ link trong tài liệu sang relative markdown links. |
-| **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:** Đồng bộ hóa Voice giữa TTS và Music, chuyển I/O sang `asyncio.to_thread`, giới hạn ký tự TTS 300 ký tự. |
+| **v1.5.0** | 2026-11-23 | Antigravity & User | **Xác thực 3 Bước & Hoàn thiện Slash Commands:**<br>• Nâng cấp `/setup-server` với quy trình xác thực 3 lần qua nút bấm tương tác (ConfirmationStepView), loại bỏ hoàn toàn Master Key.<br>• Bổ sung module `cogs/general/` với các lệnh `/help`, `/rank`, `/leaderboard`.<br>• Rà soát và cập nhật đầy đủ mô tả chi tiết, rõ ràng cho tất cả 11 Slash Commands.<br>• Tích hợp tính năng tự động thoát phòng thoại khi phòng trống người. |
+| **v1.4.0** | 2026-11-23 | Antigravity & User | **Tích hợp SQLite bất đồng bộ (aiosqlite WAL Mode):** Xây dựng `DatabaseManager`, lệnh Admin `!sync`, `!reload`, `!status`, xử lý lỗi tập trung. |
+| **v1.3.0** | 2026-11-23 | Antigravity & User | **Rà soát bảo mật & Khắc phục xung đột hệ thống:** Đồng bộ hóa Voice giữa TTS và Music, chuyển I/O sang `asyncio.to_thread`. |
 | **v1.2.0** | 2026-11-23 | Antigravity & User | **Tái cấu trúc Feature-Folder:** Tách mỗi tính năng thành 1 folder riêng trong `cogs/`. |
 | **v1.1.0** | 2026-11-23 | Antigravity & User | **Chuẩn hóa Enterprise Architecture:** Tách `.env`, `config.py`, `utils/logger.py`. |
 | **v1.0.0** | 2026-07-10 | User | **Khởi tạo dự án ban đầu:** 4 cogs phẳng cơ bản. |
@@ -322,7 +330,7 @@ docker compose up -d --build
 
 ## 10. Kế Hoạch Phát Triển (Roadmap)
 
-- [ ] **Lệnh xem bảng xếp hạng `/leaderboard`:** Hiển thị top 10 thành viên có cấp độ và điểm kinh nghiệm cao nhất server từ SQLite.
+- [x] **Lệnh xem bảng xếp hạng `/leaderboard` & xem cấp độ `/rank`:** Tích hợp trực tiếp từ SQLite Database.
 - [ ] **Interactive Buttons cho Music:** Thêm hàng nút Pause, Resume, Skip, Stop trực tiếp dưới tin nhắn phản hồi của `/play`.
 - [ ] **Hệ thống Welcome Banner:** Tạo ảnh thẻ chào mừng tự động lưu ảnh tạm trong `temp/`.
 - [ ] **Hệ thống Ticket:** Mở kênh chat riêng với Ban Quản Trị bằng Discord Button.

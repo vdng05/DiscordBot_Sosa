@@ -53,9 +53,6 @@ class Config:
     # Cơ chế Sync lệnh: Mặc định tắt tự động sync khi restart để chống Rate Limit Discord
     SYNC_ON_STARTUP: bool = os.getenv("SYNC_ON_STARTUP", "false").lower() in ("true", "1", "yes")
 
-    # Security Settings (Mã bảo mật cho lệnh cấp cao /setup-server)
-    MASTER_KEY: str = os.getenv("SETUP_MASTER_KEY", "sosa_secure_master_key_2026")
-
     # TTS Settings (Giới hạn độ dài text để chống DoS)
     TTS_MAX_LENGTH: int = int(os.getenv("TTS_MAX_LENGTH", "300"))
 

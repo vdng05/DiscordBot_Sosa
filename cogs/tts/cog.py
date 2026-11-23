@@ -18,9 +18,9 @@ class TTS(commands.Cog):
 
     @app_commands.command(
         name="speak",
-        description="Đọc văn bản thành giọng nói trong kênh thoại (Dành cho người không mic)"
+        description="Đọc văn bản tiếng Việt thành giọng nói trong kênh thoại (Dành cho người không có mic)"
     )
-    @app_commands.describe(text="Nội dung văn bản bạn muốn bot đọc")
+    @app_commands.describe(text="Nhập nội dung văn bản tiếng Việt bạn muốn bot phát âm (Tối đa 300 ký tự)")
     async def say(self, interaction: discord.Interaction, text: str):
         # 1. Kiểm tra độ dài văn bản (Chống DoS / lạm dụng spam âm thanh)
         text = text.strip()

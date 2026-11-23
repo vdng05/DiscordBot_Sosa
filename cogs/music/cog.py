@@ -22,14 +22,19 @@ class Music(commands.Cog):
             self.players[guild_id] = MusicPlayer(interaction)
         return self.players[guild_id]
 
-    @app_commands.command(name="play", description="Phát nhạc từ YouTube, SoundCloud, Spotify hoặc Từ khóa")
-    @app_commands.describe(query="Link bài hát hoặc từ khóa tìm kiếm")
+    @app_commands.command(
+        name="play",
+        description="Phát nhạc từ link (YouTube, SoundCloud, Spotify) hoặc tìm kiếm theo tên bài hát"
+    )
+    @app_commands.describe(
+        query="Nhập đường link bài hát (YouTube/SoundCloud/Spotify) hoặc gõ từ khóa tìm kiếm (Ví dụ: Nơi này có anh)"
+    )
     async def play(self, interaction: discord.Interaction, query: str):
         await interaction.response.defer()
 
         user = interaction.guild.get_member(interaction.user.id)
         if not user or not user.voice or not user.voice.channel:
-            await interaction.followup.send("❌ Bạn phải tham gia một kênh thoại trước!")
+            await interaction.followup.send("❌ Bạn phải tham gia vào một kênh thoại trước khi gọi bot phát nhạc!")
             return
 
         vc = interaction.guild.voice_client
@@ -52,7 +57,7 @@ class Music(commands.Cog):
             if spotify_query:
                 query = spotify_query
             else:
-                await interaction.followup.send("❌ Không thể đọc link Spotify này. Hãy thử gõ tên bài hát!")
+                await interaction.followup.send("❌ Không thể đọc link Spotify này. Hãy thử gõ tên bài hát để tìm kiếm!")
                 return
 
         player = self.get_player(interaction)
@@ -62,13 +67,13 @@ class Music(commands.Cog):
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(query, download=False))
 
         if not data:
-            await interaction.followup.send("❌ Không tìm thấy bài hát!")
+            await interaction.followup.send("❌ Không tìm thấy bài hát nào phù hợp với yêu cầu của bạn!")
             return
 
         if 'entries' in data:
             entries = [e for e in data['entries'] if e]
             if not entries:
-                await interaction.followup.send("❌ Không tìm thấy bài hát!")
+                await interaction.followup.send("❌ Không tìm thấy bài hát nào!")
                 return
 
             if data.get('extractor_key') == 'YoutubeSearch' or not query.startswith('http'):
@@ -78,7 +83,7 @@ class Music(commands.Cog):
                     title = get_title(entry)
                     player.queue.append({'url': url, 'title': title})
                     player.song_added.set()
-                    await interaction.followup.send(f"⏳ Đã thêm: **{title}**")
+                    await interaction.followup.send(f"⏳ Đã thêm vào hàng đợi: **{title}**")
             else:
                 count = 0
                 for entry in entries:
@@ -89,25 +94,31 @@ class Music(commands.Cog):
                         count += 1
                 if count > 0:
                     player.song_added.set()
-                    await interaction.followup.send(f"✅ Đã nạp **{count}** bài từ playlist!")
+                    await interaction.followup.send(f"✅ Đã nạp thành công **{count}** bài hát từ danh sách phát (Playlist)!")
         else:
             url = get_clean_url(data) if not query.startswith('http') else (data.get('webpage_url') or data.get('original_url') or query)
             if url:
                 title = get_title(data)
                 player.queue.append({'url': url, 'title': title})
                 player.song_added.set()
-                await interaction.followup.send(f"⏳ Đã thêm: **{title}**")
+                await interaction.followup.send(f"⏳ Đã thêm vào hàng đợi: **{title}**")
 
-    @app_commands.command(name="pause", description="Tạm dừng nhạc")
+    @app_commands.command(
+        name="pause",
+        description="Tạm dừng bài hát đang phát trong phòng thoại"
+    )
     async def pause(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         if vc and vc.is_playing():
             vc.pause()
-            await interaction.response.send_message("⏸️ Đã tạm dừng.")
+            await interaction.response.send_message("⏸️ Đã tạm dừng phát nhạc.")
         else:
-            await interaction.response.send_message("❌ Hiện tại bot không phát nhạc.", ephemeral=True)
+            await interaction.response.send_message("❌ Hiện tại bot không phát bài hát nào.", ephemeral=True)
 
-    @app_commands.command(name="resume", description="Tiếp tục phát nhạc")
+    @app_commands.command(
+        name="resume",
+        description="Tiếp tục phát bài hát đang bị tạm dừng"
+    )
     async def resume(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         if vc and vc.is_paused():
@@ -116,7 +127,10 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("❌ Nhạc không ở trạng thái tạm dừng.", ephemeral=True)
 
-    @app_commands.command(name="skip", description="Bỏ qua bài hát hiện tại")
+    @app_commands.command(
+        name="skip",
+        description="Bỏ qua bài hát hiện tại và tự động chuyển sang bài tiếp theo trong hàng đợi"
+    )
     async def skip(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         player = self.get_player(interaction)
@@ -124,25 +138,28 @@ class Music(commands.Cog):
         if vc and (vc.is_playing() or vc.is_paused()):
             if player.queue:
                 next_song = player.queue[0]['title']
-                msg = f"⏭️ Đã chuyển bài hát!\n🎶 Đang phát tiếp theo: **{next_song}**"
+                msg = f"⏭️ Đã chuyển bài hát!\n🎶 **Đang phát tiếp theo:** {next_song}"
             else:
-                msg = "⏭️ Đã chuyển bài hát!\n📭 Hàng đợi đã trống."
+                msg = "⏭️ Đã chuyển bài hát!\n📭 Hàng đợi bài hát hiện tại đã trống."
 
             vc.stop()
             await interaction.response.send_message(msg)
         else:
-            await interaction.response.send_message("❌ Không có nhạc đang phát để bỏ qua.", ephemeral=True)
+            await interaction.response.send_message("❌ Không có bài hát nào đang phát để bỏ qua.", ephemeral=True)
 
-    @app_commands.command(name="queue", description="Hiển thị hàng đợi")
+    @app_commands.command(
+        name="queue",
+        description="Xem danh sách các bài hát đang chờ phát trong hàng đợi của máy chủ"
+    )
     async def queue(self, interaction: discord.Interaction):
         player = self.get_player(interaction)
         if not player.queue and not (interaction.guild.voice_client and player.current_track):
-            await interaction.response.send_message("📭 Hàng đợi hiện tại đang trống.")
+            await interaction.response.send_message("📭 Hàng đợi bài hát hiện tại đang trống.")
             return
 
-        embed = discord.Embed(title="📋 Danh sách nhạc đang chờ", color=discord.Color.blue())
+        embed = discord.Embed(title="📋 DANH SÁCH BÀI HÁT ĐANG CHỜ", color=discord.Color.blue())
         if player.current_track:
-            embed.description = f"**Đang phát:** {player.current_track['title']}\n\n**Tiếp theo:**"
+            embed.description = f"**🎶 Đang phát:** {player.current_track['title']}\n\n**Bài hát tiếp theo:**"
 
         queue_list = "\n".join(f"`{i}.` {track['title']}" for i, track in enumerate(player.queue[:10], 1))
         if len(player.queue) > 10:
@@ -151,7 +168,10 @@ class Music(commands.Cog):
         embed.add_field(name="Hàng đợi", value=queue_list or "Trống", inline=False)
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="leave", description="Đuổi bot khỏi kênh thoại và xóa hàng đợi")
+    @app_commands.command(
+        name="leave",
+        description="Yêu cầu bot ngắt kết nối khỏi kênh thoại và làm sạch hàng đợi"
+    )
     async def leave(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         if vc:
@@ -164,13 +184,13 @@ class Music(commands.Cog):
                 await vc.disconnect()
             except Exception:
                 pass
-            await interaction.response.send_message("👋 Đã rời khỏi phòng và làm sạch bộ nhớ.")
+            await interaction.response.send_message("👋 Đã rời khỏi phòng thoại và giải phóng bộ nhớ.")
         else:
-            await interaction.response.send_message("❌ Bot đang không ở trong phòng.", ephemeral=True)
+            await interaction.response.send_message("❌ Bot đang không ở trong kênh thoại nào.", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        """Nếu tất cả người dùng rời phòng (chỉ còn lại bot), tự động ngắt kết nối để giải phóng RAM/FFmpeg"""
+        """Nếu tất cả người dùng rời phòng (chỉ còn bot), tự động ngắt kết nối để giải phóng RAM/FFmpeg"""
         if member.bot:
             return
 
