@@ -117,91 +117,125 @@ async def draw_love_calculator(
     - Nếu không có: Tự động vẽ bằng code (Fallback).
     """
     love_template_path = TEMPLATE_DIR / "love_template.png"
-    has_template = love_template_path.exists()
 
-    if has_template:
+    if love_template_path.exists():
         try:
-            base = Image.open(love_template_path).convert("RGBA")
-            WIDTH, HEIGHT = base.size
+            template = Image.open(love_template_path).convert("RGBA")
+            W, H = template.size
+            base = Image.new("RGBA", (W, H), (255, 255, 255, 255))
+
+            # 1. Tải 2 Avatar người dùng
+            av1 = await fetch_avatar_image(avatar1_url, (130, 130))
+            av2 = await fetch_avatar_image(avatar2_url, (126, 126))
+
+            # 2. Dán avatar dưới template để mũ / tai nghe / cánh dơi viền đè lên tự nhiên
+            base.paste(av1, (185, 115), mask=av1)
+            base.paste(av2, (704, 117), mask=av2)
+
+            # 3. Phủ template lên trên
+            base.alpha_composite(template)
             draw = ImageDraw.Draw(base)
+
+            # 4. Vẽ thanh tiến trình tình yêu vào rãnh đáy
+            bar_x = 292
+            bar_y = 348
+            bar_max_w = 416
+            bar_h = 38
+            fill_w = max(int(bar_max_w * (percentage / 100)), 20)
+            draw.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), radius=19, fill=(255, 70, 135))
+
+            # 5. In tên 2 người vào khung trắng phía dưới avatar
+            font_name = get_font(20, bold=True)
+            clean_name1 = user1_name[:12] + ("..." if len(user1_name) > 12 else "")
+            clean_name2 = user2_name[:12] + ("..." if len(user2_name) > 12 else "")
+            draw.text((250, 292), clean_name1, fill=(90, 45, 80), font=font_name, anchor="mm")
+            draw.text((763, 291), clean_name2, fill=(90, 45, 80), font=font_name, anchor="mm")
+
+            # 6. In con số % vào giữa trái tim trung tâm (chữ trắng có viền bóng đậm)
+            font_pct = get_font(56, bold=True)
+            pct_str = f"{percentage}%"
+            for ox, oy in [(-3, -3), (3, -3), (-3, 3), (3, 3), (0, 3), (0, -3), (-3, 0), (3, 0)]:
+                draw.text((510 + ox, 208 + oy), pct_str, fill=(170, 35, 75), font=font_pct, anchor="mm")
+            draw.text((510, 208), pct_str, fill=(255, 255, 255), font=font_pct, anchor="mm")
+
+            output = io.BytesIO()
+            base.save(output, format="PNG")
+            output.seek(0)
+            return output
         except Exception as e:
-            logger.warning(f"Không thể mở love_template.png ({e}), chuyển sang chế độ tự vẽ.")
-            has_template = False
+            logger.warning(f"Lỗi khi xử lý love_template.png ({e}), chuyển sang chế độ tự vẽ.")
 
-    if not has_template:
-        WIDTH, HEIGHT = 840, 360
-        base = Image.new("RGBA", (WIDTH, HEIGHT), (255, 245, 245, 255))
-        draw = ImageDraw.Draw(base)
+    # FALLBACK: Tự động vẽ hoàn toàn bằng code nếu chưa có file template
+    WIDTH, HEIGHT = 840, 360
+    base = Image.new("RGBA", (WIDTH, HEIGHT), (255, 245, 245, 255))
+    draw = ImageDraw.Draw(base)
 
-        # 1. Vẽ nền gradient nhẹ
-        for y in range(HEIGHT):
-            ratio = y / HEIGHT
-            r = int(255 - ratio * 10)
-            g = int(245 - ratio * 18)
-            b = int(240 - ratio * 15)
-            draw.line([(0, y), (WIDTH, y)], fill=(r, g, b, 255))
+    # 1. Vẽ nền gradient nhẹ
+    for y in range(HEIGHT):
+        ratio = y / HEIGHT
+        r = int(255 - ratio * 10)
+        g = int(245 - ratio * 18)
+        b = int(240 - ratio * 15)
+        draw.line([(0, y), (WIDTH, y)], fill=(r, g, b, 255))
 
-        # 2. Vẽ viền khung tranh bo tròn bên trong
-        inner_box = (20, 20, WIDTH - 20, HEIGHT - 20)
-        draw.rounded_rectangle(inner_box, radius=24, outline=(255, 205, 215, 255), width=3, fill=(255, 250, 248, 200))
+    # 2. Vẽ viền khung tranh bo tròn bên trong
+    inner_box = (20, 20, WIDTH - 20, HEIGHT - 20)
+    draw.rounded_rectangle(inner_box, radius=24, outline=(255, 205, 215, 255), width=3, fill=(255, 250, 248, 200))
 
-        # 3. Tiêu đề Header
-        font_title = get_font(26, bold=True)
-        header_text = "~ Sosa Love Calculator ~"
-        draw.text((WIDTH // 2, 45), header_text, fill=(255, 105, 145), font=font_title, anchor="mm")
+    # 3. Tiêu đề Header
+    font_title = get_font(26, bold=True)
+    header_text = "~ Sosa Love Calculator ~"
+    draw.text((WIDTH // 2, 45), header_text, fill=(255, 105, 145), font=font_title, anchor="mm")
 
-    # 4. Tải và dán 2 Avatar (Tính toán tỷ lệ theo kích thước ảnh)
-    scale_w = WIDTH / 840
-    scale_h = HEIGHT / 360
-
-    AVATAR_SIZE = int(130 * min(scale_w, scale_h))
+    # 4. Tải và dán 2 Avatar
+    AVATAR_SIZE = 130
     av1 = await fetch_avatar_image(avatar1_url, (AVATAR_SIZE, AVATAR_SIZE))
     av2 = await fetch_avatar_image(avatar2_url, (AVATAR_SIZE, AVATAR_SIZE))
 
-    pos1 = (int(120 * scale_w), int(105 * scale_h))
-    pos2 = (WIDTH - int(120 * scale_w) - AVATAR_SIZE, int(105 * scale_h))
+    pos1 = (120, 105)
+    pos2 = (WIDTH - 120 - AVATAR_SIZE, 105)
 
-    if not has_template:
-        # Vẽ đường nhịp tim ECG kết nối 2 avatar
-        heartbeat_y = int(170 * scale_h)
-        draw.line([(pos1[0] + AVATAR_SIZE, heartbeat_y), (WIDTH // 2 - int(80 * scale_w), heartbeat_y)], fill=(255, 185, 195), width=3)
-        draw.line([(WIDTH // 2 + int(80 * scale_w), heartbeat_y), (pos2[0], heartbeat_y)], fill=(255, 185, 195), width=3)
+    # Đường nhịp tim ECG kết nối 2 avatar
+    heartbeat_y = 170
+    draw.line([(pos1[0] + AVATAR_SIZE, heartbeat_y), (WIDTH // 2 - 80, heartbeat_y)], fill=(255, 185, 195), width=3)
+    draw.line([(WIDTH // 2 + 80, heartbeat_y), (pos2[0], heartbeat_y)], fill=(255, 185, 195), width=3)
 
     # Dán 2 Avatar với viền
-    draw_circle_avatar(base, av1, pos1, border_color=(255, 130, 160), border_width=max(int(4 * scale_w), 2))
-    draw_circle_avatar(base, av2, pos2, border_color=(255, 130, 160), border_width=max(int(4 * scale_w), 2))
+    draw_circle_avatar(base, av1, pos1, border_color=(255, 130, 160), border_width=4)
+    draw_circle_avatar(base, av2, pos2, border_color=(255, 130, 160), border_width=4)
 
     # 5. Tên người dùng dưới avatar
-    font_name = get_font(max(int(18 * scale_h), 12), bold=True)
+    font_name = get_font(18, bold=True)
     clean_name1 = user1_name[:12] + ("..." if len(user1_name) > 12 else "")
     clean_name2 = user2_name[:12] + ("..." if len(user2_name) > 12 else "")
-    draw.text((pos1[0] + AVATAR_SIZE // 2, pos1[1] + AVATAR_SIZE + int(18 * scale_h)), clean_name1, fill=(120, 80, 95), font=font_name, anchor="mm")
-    draw.text((pos2[0] + AVATAR_SIZE // 2, pos2[1] + AVATAR_SIZE + int(18 * scale_h)), clean_name2, fill=(120, 80, 95), font=font_name, anchor="mm")
+    draw.text((pos1[0] + AVATAR_SIZE // 2, pos1[1] + AVATAR_SIZE + 20), clean_name1, fill=(120, 80, 95), font=font_name, anchor="mm")
+    draw.text((pos2[0] + AVATAR_SIZE // 2, pos2[1] + AVATAR_SIZE + 20), clean_name2, fill=(120, 80, 95), font=font_name, anchor="mm")
 
     # 6. Trái tim trung tâm và %
-    heart_center = (WIDTH // 2, int(170 * scale_h))
-    heart_size = int(90 * min(scale_w, scale_h))
-    if not has_template:
-        draw_heart(draw, heart_center, heart_size, fill_color=(255, 80, 125))
+    heart_center = (WIDTH // 2, 170)
+    heart_size = 90
+    draw_heart(draw, heart_center, heart_size, fill_color=(255, 80, 125))
 
-    font_pct = get_font(max(int(28 * scale_h), 16), bold=True)
+    font_pct = get_font(28, bold=True)
     pct_text = f"{percentage}%"
-    # Nếu dùng template, vẽ chữ % màu trắng hoặc viền hồng nổi bật
-    draw.text((heart_center[0], heart_center[1] + int(4 * scale_h)), pct_text, fill=(255, 255, 255) if not has_template else (255, 75, 120), font=font_pct, anchor="mm")
+    draw.text((heart_center[0], heart_center[1] + 5), pct_text, fill=(255, 255, 255), font=font_pct, anchor="mm")
 
     # 7. Thanh tim tiến trình (Love Meter Bar) ở cạnh dưới
-    bar_width = int(320 * scale_w)
-    bar_height = int(20 * scale_h)
+    bar_width = 320
+    bar_height = 20
     bar_x = (WIDTH - bar_width) // 2
-    bar_y = int(285 * scale_h)
+    bar_y = 285
 
-    # Viền nền thanh bar (nếu chưa có template)
-    if not has_template:
-        draw.rounded_rectangle((bar_x, bar_y, bar_x + bar_width, bar_y + bar_height), radius=10, fill=(255, 225, 230), outline=(255, 180, 195), width=2)
-    # Phần trăm đổ đầy
+    draw.rounded_rectangle((bar_x, bar_y, bar_x + bar_width, bar_y + bar_height), radius=10, fill=(255, 225, 230), outline=(255, 180, 195), width=2)
     fill_w = max(int(bar_width * (percentage / 100)), 15) if percentage > 0 else 0
     if fill_w > 0:
         draw.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_height), radius=10, fill=(255, 90, 135))
+
+    # Xuất ra bộ đệm RAM
+    output = io.BytesIO()
+    base.save(output, format="PNG")
+    output.seek(0)
+    return output
 
     # Xuất ra bộ đệm RAM
     output = io.BytesIO()
