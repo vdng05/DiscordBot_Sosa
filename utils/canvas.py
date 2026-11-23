@@ -101,6 +101,8 @@ def draw_heart(draw: ImageDraw.ImageDraw, center: Tuple[int, int], size: int, fi
     ], fill=fill_color)
 
 
+TEMPLATE_DIR = Path("assets/templates")
+
 async def draw_love_calculator(
     avatar1_url: str,
     avatar2_url: str,
@@ -109,73 +111,93 @@ async def draw_love_calculator(
     percentage: int
 ) -> io.BytesIO:
     """
-    Vẽ banner Love Calculator phong cách Pastel Cute (tương tự Lunari Bot):
-    - Tone nền hồng đào / kem dịu mắt
-    - 2 Avatar người dùng bo tròn có viền
-    - Trái tim ở giữa kèm % độ hợp
-    - Thanh đo nhịp tim (Love progress bar)
+    Vẽ banner Love Calculator:
+    - Nếu có file assets/templates/love_template.png: Sử dụng ảnh mẫu đồ họa tĩnh của người dùng
+      và dán 2 avatar, in số %, thanh progress bar và tên 2 người lên các vị trí chuẩn.
+    - Nếu không có: Tự động vẽ bằng code (Fallback).
     """
-    WIDTH, HEIGHT = 840, 360
-    base = Image.new("RGBA", (WIDTH, HEIGHT), (255, 245, 245, 255))
-    draw = ImageDraw.Draw(base)
+    love_template_path = TEMPLATE_DIR / "love_template.png"
+    has_template = love_template_path.exists()
 
-    # 1. Vẽ nền gradient nhẹ
-    for y in range(HEIGHT):
-        ratio = y / HEIGHT
-        r = int(255 - ratio * 10)
-        g = int(245 - ratio * 18)
-        b = int(240 - ratio * 15)
-        draw.line([(0, y), (WIDTH, y)], fill=(r, g, b, 255))
+    if has_template:
+        try:
+            base = Image.open(love_template_path).convert("RGBA")
+            WIDTH, HEIGHT = base.size
+            draw = ImageDraw.Draw(base)
+        except Exception as e:
+            logger.warning(f"Không thể mở love_template.png ({e}), chuyển sang chế độ tự vẽ.")
+            has_template = False
 
-    # 2. Vẽ viền khung tranh bo tròn bên trong
-    inner_box = (20, 20, WIDTH - 20, HEIGHT - 20)
-    draw.rounded_rectangle(inner_box, radius=24, outline=(255, 205, 215, 255), width=3, fill=(255, 250, 248, 200))
+    if not has_template:
+        WIDTH, HEIGHT = 840, 360
+        base = Image.new("RGBA", (WIDTH, HEIGHT), (255, 245, 245, 255))
+        draw = ImageDraw.Draw(base)
 
-    # 3. Tiêu đề Header
-    font_title = get_font(26, bold=True)
-    header_text = "~ Sosa Love Calculator ~"
-    draw.text((WIDTH // 2, 45), header_text, fill=(255, 105, 145), font=font_title, anchor="mm")
+        # 1. Vẽ nền gradient nhẹ
+        for y in range(HEIGHT):
+            ratio = y / HEIGHT
+            r = int(255 - ratio * 10)
+            g = int(245 - ratio * 18)
+            b = int(240 - ratio * 15)
+            draw.line([(0, y), (WIDTH, y)], fill=(r, g, b, 255))
 
-    # 4. Tải và dán 2 Avatar
-    AVATAR_SIZE = 130
+        # 2. Vẽ viền khung tranh bo tròn bên trong
+        inner_box = (20, 20, WIDTH - 20, HEIGHT - 20)
+        draw.rounded_rectangle(inner_box, radius=24, outline=(255, 205, 215, 255), width=3, fill=(255, 250, 248, 200))
+
+        # 3. Tiêu đề Header
+        font_title = get_font(26, bold=True)
+        header_text = "~ Sosa Love Calculator ~"
+        draw.text((WIDTH // 2, 45), header_text, fill=(255, 105, 145), font=font_title, anchor="mm")
+
+    # 4. Tải và dán 2 Avatar (Tính toán tỷ lệ theo kích thước ảnh)
+    scale_w = WIDTH / 840
+    scale_h = HEIGHT / 360
+
+    AVATAR_SIZE = int(130 * min(scale_w, scale_h))
     av1 = await fetch_avatar_image(avatar1_url, (AVATAR_SIZE, AVATAR_SIZE))
     av2 = await fetch_avatar_image(avatar2_url, (AVATAR_SIZE, AVATAR_SIZE))
 
-    pos1 = (120, 105)
-    pos2 = (WIDTH - 120 - AVATAR_SIZE, 105)
+    pos1 = (int(120 * scale_w), int(105 * scale_h))
+    pos2 = (WIDTH - int(120 * scale_w) - AVATAR_SIZE, int(105 * scale_h))
 
-    # 5. Vẽ đường nhịp tim ECG kết nối 2 avatar
-    heartbeat_y = 170
-    draw.line([(pos1[0] + AVATAR_SIZE, heartbeat_y), (WIDTH // 2 - 80, heartbeat_y)], fill=(255, 185, 195), width=3)
-    draw.line([(WIDTH // 2 + 80, heartbeat_y), (pos2[0], heartbeat_y)], fill=(255, 185, 195), width=3)
+    if not has_template:
+        # Vẽ đường nhịp tim ECG kết nối 2 avatar
+        heartbeat_y = int(170 * scale_h)
+        draw.line([(pos1[0] + AVATAR_SIZE, heartbeat_y), (WIDTH // 2 - int(80 * scale_w), heartbeat_y)], fill=(255, 185, 195), width=3)
+        draw.line([(WIDTH // 2 + int(80 * scale_w), heartbeat_y), (pos2[0], heartbeat_y)], fill=(255, 185, 195), width=3)
 
-    # 6. Vẽ 2 Avatar
-    draw_circle_avatar(base, av1, pos1, border_color=(255, 130, 160), border_width=4)
-    draw_circle_avatar(base, av2, pos2, border_color=(255, 130, 160), border_width=4)
+    # Dán 2 Avatar với viền
+    draw_circle_avatar(base, av1, pos1, border_color=(255, 130, 160), border_width=max(int(4 * scale_w), 2))
+    draw_circle_avatar(base, av2, pos2, border_color=(255, 130, 160), border_width=max(int(4 * scale_w), 2))
 
-    # 7. Tên người dùng dưới avatar
-    font_name = get_font(18, bold=True)
+    # 5. Tên người dùng dưới avatar
+    font_name = get_font(max(int(18 * scale_h), 12), bold=True)
     clean_name1 = user1_name[:12] + ("..." if len(user1_name) > 12 else "")
     clean_name2 = user2_name[:12] + ("..." if len(user2_name) > 12 else "")
-    draw.text((pos1[0] + AVATAR_SIZE // 2, pos1[1] + AVATAR_SIZE + 20), clean_name1, fill=(120, 80, 95), font=font_name, anchor="mm")
-    draw.text((pos2[0] + AVATAR_SIZE // 2, pos2[1] + AVATAR_SIZE + 20), clean_name2, fill=(120, 80, 95), font=font_name, anchor="mm")
+    draw.text((pos1[0] + AVATAR_SIZE // 2, pos1[1] + AVATAR_SIZE + int(18 * scale_h)), clean_name1, fill=(120, 80, 95), font=font_name, anchor="mm")
+    draw.text((pos2[0] + AVATAR_SIZE // 2, pos2[1] + AVATAR_SIZE + int(18 * scale_h)), clean_name2, fill=(120, 80, 95), font=font_name, anchor="mm")
 
-    # 8. Trái tim trung tâm và %
-    heart_center = (WIDTH // 2, 170)
-    heart_size = 90
-    draw_heart(draw, heart_center, heart_size, fill_color=(255, 80, 125))
+    # 6. Trái tim trung tâm và %
+    heart_center = (WIDTH // 2, int(170 * scale_h))
+    heart_size = int(90 * min(scale_w, scale_h))
+    if not has_template:
+        draw_heart(draw, heart_center, heart_size, fill_color=(255, 80, 125))
 
-    font_pct = get_font(28, bold=True)
-    draw.text((heart_center[0], heart_center[1] + 5), f"{percentage}%", fill=(255, 255, 255), font=font_pct, anchor="mm")
+    font_pct = get_font(max(int(28 * scale_h), 16), bold=True)
+    pct_text = f"{percentage}%"
+    # Nếu dùng template, vẽ chữ % màu trắng hoặc viền hồng nổi bật
+    draw.text((heart_center[0], heart_center[1] + int(4 * scale_h)), pct_text, fill=(255, 255, 255) if not has_template else (255, 75, 120), font=font_pct, anchor="mm")
 
-    # 9. Thanh tim tiến trình (Love Meter Bar) ở cạnh dưới
-    bar_width = 320
-    bar_height = 20
+    # 7. Thanh tim tiến trình (Love Meter Bar) ở cạnh dưới
+    bar_width = int(320 * scale_w)
+    bar_height = int(20 * scale_h)
     bar_x = (WIDTH - bar_width) // 2
-    bar_y = 285
+    bar_y = int(285 * scale_h)
 
-    # Viền nền thanh bar
-    draw.rounded_rectangle((bar_x, bar_y, bar_x + bar_width, bar_y + bar_height), radius=10, fill=(255, 225, 230), outline=(255, 180, 195), width=2)
+    # Viền nền thanh bar (nếu chưa có template)
+    if not has_template:
+        draw.rounded_rectangle((bar_x, bar_y, bar_x + bar_width, bar_y + bar_height), radius=10, fill=(255, 225, 230), outline=(255, 180, 195), width=2)
     # Phần trăm đổ đầy
     fill_w = max(int(bar_width * (percentage / 100)), 15) if percentage > 0 else 0
     if fill_w > 0:
@@ -198,25 +220,36 @@ async def draw_rank_card(
 ) -> io.BytesIO:
     """
     Vẽ thẻ Rank phong cách Anime / Chibi Gal Hiphop:
-    - Nền tối thời thượng (Deep Indigo / Cyberpunk Neon Pink)
-    - Avatar bo tròn viền phát sáng đôi (Neon Glow)
-    - Thanh tiến trình XP gradient neon
-    - Badge Level & Rank nổi bật
+    - Nếu có file assets/templates/rank_template.png: Dùng ảnh mẫu tĩnh do người dùng thiết kế.
+    - Nếu không: Tự vẽ nền neon deep navy / magenta bo góc công nghệ (Fallback).
     """
-    WIDTH, HEIGHT = 880, 260
-    base = Image.new("RGBA", (WIDTH, HEIGHT), (20, 18, 38, 255))
-    draw = ImageDraw.Draw(base)
+    rank_template_path = TEMPLATE_DIR / "rank_template.png"
+    has_template = rank_template_path.exists()
 
-    # 1. Nền gradient đường phố neon (Deep Navy -> Dark Magenta)
-    for x in range(WIDTH):
-        ratio = x / WIDTH
-        r = int(22 + ratio * 20)
-        g = int(20 + ratio * 8)
-        b = int(45 + ratio * 15)
-        draw.line([(x, 0), (x, HEIGHT)], fill=(r, g, b, 255))
+    if has_template:
+        try:
+            base = Image.open(rank_template_path).convert("RGBA")
+            WIDTH, HEIGHT = base.size
+            draw = ImageDraw.Draw(base)
+        except Exception as e:
+            logger.warning(f"Không thể mở rank_template.png ({e}), chuyển sang chế độ tự vẽ.")
+            has_template = False
 
-    # Khung bo góc công nghệ
-    draw.rounded_rectangle((15, 15, WIDTH - 15, HEIGHT - 15), radius=20, outline=(255, 46, 147, 180), width=3)
+    if not has_template:
+        WIDTH, HEIGHT = 880, 260
+        base = Image.new("RGBA", (WIDTH, HEIGHT), (20, 18, 38, 255))
+        draw = ImageDraw.Draw(base)
+
+        # 1. Nền gradient đường phố neon (Deep Navy -> Dark Magenta)
+        for x in range(WIDTH):
+            ratio = x / WIDTH
+            r = int(22 + ratio * 20)
+            g = int(20 + ratio * 8)
+            b = int(45 + ratio * 15)
+            draw.line([(x, 0), (x, HEIGHT)], fill=(r, g, b, 255))
+
+        # Khung bo góc công nghệ
+        draw.rounded_rectangle((15, 15, WIDTH - 15, HEIGHT - 15), radius=20, outline=(255, 46, 147, 180), width=3)
 
     # 2. Tải và dán Avatar
     AVATAR_SIZE = 150
