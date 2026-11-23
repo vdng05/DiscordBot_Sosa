@@ -3,13 +3,14 @@ from discord.ext import commands
 from discord import app_commands
 import random
 import datetime
+import hashlib
 import logging
 from typing import Optional, Tuple, Dict, Any
 from utils.canvas import draw_love_calculator
 from utils.database import RING_TIERS
 from .views import ProposalView, MarryHouseView
 
-logger = logging.getLogger("SosaBot.Marry")
+logger = logging.getLogger("SosaGallery.Marry")
 
 # GIF kho hành động anime dễ thương
 ACTION_GIFS = {
@@ -110,15 +111,17 @@ class Marry(commands.Cog):
             else:
                 user2 = author
 
-        # 2. Tính toán phần trăm (Thuật toán duyên phận cố định theo ngày)
-        today_seed = datetime.date.today().toordinal()
-        pair_id = min(user1.id, user2.id) + max(user1.id, user2.id)
+        # 2. Tính toán phần trăm duyên phận (Thuật toán đối xứng, chống trùng lặp, đổi tỉ lệ theo tuần)
         if user1.id == user2.id:
             percentage = 100
         else:
-            random.seed(pair_id + today_seed)
-            percentage = random.randint(1, 100)
-            random.seed()  # Reset seed
+            # Lấy Năm và Tuần ISO hiện tại (Từ Thứ Hai đến Chủ Nhật cùng 1 tuần sẽ có cùng 1 kết quả duyên phận)
+            iso_year, iso_week, _ = datetime.date.today().isocalendar()
+            # Ghép ID theo thứ tự min_max để đảm bảo tính đối xứng tuyệt đối (A bói B == B bói A)
+            pair_key = f"{min(user1.id, user2.id)}_{max(user1.id, user2.id)}_{iso_year}_w{iso_week}"
+            # Sử dụng SHA-256 phân bổ đồng đều ngẫu nhiên từ 1% đến 100% không lo va chạm cộng số
+            hash_int = int(hashlib.sha256(pair_key.encode("utf-8")).hexdigest(), 16)
+            percentage = (hash_int % 100) + 1
 
         # Lấy lời bình
         tag_line, desc_line, advice_line = get_love_quote(percentage)

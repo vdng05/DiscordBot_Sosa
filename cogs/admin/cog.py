@@ -5,7 +5,7 @@ import psutil
 import os
 import time
 
-logger = logging.getLogger("SosaBot.Admin")
+logger = logging.getLogger("SosaGallery.Admin")
 
 class Admin(commands.Cog):
     """Module quản trị hệ thống dành riêng cho Owner (Chủ Bot): sync lệnh, hot-reload, status"""
@@ -14,13 +14,14 @@ class Admin(commands.Cog):
         self.bot = bot
         self.start_time = time.time()
 
-    @commands.command(name="sync", description="Đồng bộ Slash Commands tức thì vào Server (!sync hoặc !sync guild)")
-    async def sync_commands(self, ctx: commands.Context, scope: str = "guild"):
+    @commands.command(name="sync", description="Đồng bộ Slash Commands và xóa sạch lệnh trùng lặp (!sync, !sync clean, !sync global)")
+    async def sync_commands(self, ctx: commands.Context, scope: str = "clean"):
         """
         Cú pháp:
-        !sync         -> Đồng bộ tức thì toàn bộ Slash Commands vào server hiện tại
-        !sync guild   -> Tương tự (!sync)
-        !sync global  -> Đồng bộ toàn cầu (chỉ dành cho Chủ Bot)
+        !sync         -> Xóa sạch lệnh trùng lặp cấp server và đồng bộ lại bộ lệnh Global chuẩn
+        !sync clean   -> Tương tự (!sync)
+        !sync global  -> Đồng bộ toàn cầu
+        !sync guild   -> Buộc đồng bộ vào riêng server hiện tại
         """
         is_bot_owner = await self.bot.is_owner(ctx.author)
         is_guild_admin = ctx.guild and (ctx.author == ctx.guild.owner or ctx.author.guild_permissions.administrator)
@@ -30,22 +31,36 @@ class Admin(commands.Cog):
             return
 
         if scope.lower() == "global" and not is_bot_owner:
-            await ctx.send("⛔ Đồng bộ toàn cầu (`!sync global`) chỉ dành cho Chủ Bot. Bạn hãy gõ `!sync` để đồng bộ cho server này nhé!")
+            await ctx.send("⛔ Đồng bộ toàn cầu (`!sync global`) chỉ dành cho Chủ Bot. Bạn hãy gõ `!sync` để đồng bộ và dọn dẹp cho server này nhé!")
             return
 
-        msg = await ctx.send(f"⏳ Đang đồng bộ Slash Commands phạm vi: `{scope}`...")
+        msg = await ctx.send(f"⏳ Đang xử lý đồng bộ Slash Commands (chế độ: `{scope}`)...")
 
         try:
-            if scope.lower() == "global":
+            if scope.lower() in ("clean", "clear"):
+                # 1. Xóa toàn bộ lệnh cục bộ bị trùng ở Guild này
+                self.bot.tree.clear_commands(guild=ctx.guild)
+                await self.bot.tree.sync(guild=ctx.guild)
+                # 2. Đồng bộ lại bộ lệnh Global chuẩn
+                synced = await self.bot.tree.sync()
+                await msg.edit(content=(
+                    f"🧹 **Đã dọn dẹp sạch toàn bộ lệnh trùng lặp trên máy chủ `{ctx.guild.name}`!**\n"
+                    f"✅ Đã đồng bộ chuẩn **{len(synced)}** Slash Commands toàn hệ thống.\n"
+                    "👉 Hiện tại bạn gõ `/` sẽ chỉ thấy duy nhất 1 danh sách lệnh chuẩn, không còn bị nhân đôi nữa nha!"
+                ))
+                logger.info(f"{ctx.author} đã dọn dẹp lệnh trùng và sync global ({len(synced)} lệnh) cho Guild {ctx.guild.id}.")
+
+            elif scope.lower() == "global":
                 synced = await self.bot.tree.sync()
                 await msg.edit(content=f"✅ Đã đồng bộ thành công **{len(synced)}** Slash Commands toàn cầu!")
                 logger.info(f"Owner {ctx.author} đã đồng bộ toàn cầu {len(synced)} lệnh.")
-            else:
+
+            elif scope.lower() == "guild":
                 self.bot.tree.copy_global_to(guild=ctx.guild)
                 synced = await self.bot.tree.sync(guild=ctx.guild)
                 await msg.edit(content=(
-                    f"✅ **Đồng bộ thành công {len(synced)} Slash Commands cho máy chủ `{ctx.guild.name}`!**\n"
-                    "👉 Bây giờ bạn có thể gõ `/` để thấy đầy đủ tất cả các lệnh của SosaBot."
+                    f"✅ **Đã sao chép {len(synced)} lệnh vào riêng server `{ctx.guild.name}`!**\n"
+                    "*(Lưu ý: Nếu thấy lệnh bị nhân đôi do Discord hiển thị cả lệnh Global lẫn Guild, bạn chỉ cần gõ `!sync clean` là hết)*"
                 ))
                 logger.info(f"{ctx.author} đã đồng bộ {len(synced)} lệnh cho Guild {ctx.guild.id}.")
         except Exception as e:

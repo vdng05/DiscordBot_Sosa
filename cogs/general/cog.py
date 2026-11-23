@@ -2,12 +2,15 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import logging
+from config import Config
 from utils.canvas import draw_rank_card
 
 logger = logging.getLogger("SosaGallery.General")
 
-def get_help_embed(category: str = "all", prefix: str = "!") -> discord.Embed:
+def get_help_embed(category: str = "all", prefix: str = None) -> discord.Embed:
     """Tạo Embed hướng dẫn lệnh thân thiện, dễ hiểu cho người dùng theo từng danh mục"""
+    if not prefix:
+        prefix = Config.COMMAND_PREFIX
     if category == "music":
         embed = discord.Embed(
             title="🎵 HƯỚNG DẪN NGHE NHẠC (MUSIC)",
@@ -219,8 +222,8 @@ def get_help_embed(category: str = "all", prefix: str = "!") -> discord.Embed:
 class HelpSelect(discord.ui.Select):
     """Menu chọn danh mục trợ giúp dạng Dropdown"""
 
-    def __init__(self, prefix: str = "!"):
-        self.prefix = prefix
+    def __init__(self, prefix: str = None):
+        self.prefix = prefix or Config.COMMAND_PREFIX
         options = [
             discord.SelectOption(label="Tất Cả Tính Năng (Tổng Quan)", description="Xem toàn bộ danh mục và tóm tắt nhanh", emoji="📌", value="all"),
             discord.SelectOption(label="Âm Nhạc (Music)", description="Nghe nhạc YouTube, Spotify cùng các nút điều khiển", emoji="🎵", value="music"),
@@ -241,9 +244,9 @@ class HelpSelect(discord.ui.Select):
 class HelpView(discord.ui.View):
     """Giao diện View chứa Menu Dropdown chọn danh mục trợ giúp"""
 
-    def __init__(self, prefix: str = "!"):
+    def __init__(self, prefix: str = None):
         super().__init__(timeout=180.0)
-        self.add_item(HelpSelect(prefix))
+        self.add_item(HelpSelect(prefix or Config.COMMAND_PREFIX))
 
 
 class General(commands.Cog):

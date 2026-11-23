@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Any, List, Optional, Tuple, Dict
 import logging
 import time
+from config import Config
 
-logger = logging.getLogger("SosaBot.Database")
+logger = logging.getLogger("SosaGallery.Database")
 
 # Định nghĩa các bậc nhẫn cưới (Ring Tiers) dựa trên điểm thân mật
 RING_TIERS = {
@@ -145,14 +146,14 @@ class DatabaseManager:
             row = await cursor.fetchone()
             if row:
                 return {
-                    "prefix": row[0] or "!",
+                    "prefix": row[0] or Config.COMMAND_PREFIX,
                     "welcome_channel_id": row[1],
                     "music_channel_id": row[2],
                     "automod_enabled": bool(row[3]),
                     "level_system_enabled": bool(row[4])
                 }
             return {
-                "prefix": "!",
+                "prefix": Config.COMMAND_PREFIX,
                 "welcome_channel_id": None,
                 "music_channel_id": None,
                 "automod_enabled": False,
@@ -185,7 +186,7 @@ class DatabaseManager:
             (gid,)
         ) as cursor:
             row = await cursor.fetchone()
-            prefix = row[0] if (row and row[0]) else "!"
+            prefix = row[0] if (row and row[0]) else Config.COMMAND_PREFIX
             self._prefix_cache[gid] = prefix
             return prefix
 
