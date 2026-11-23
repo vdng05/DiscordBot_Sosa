@@ -135,14 +135,14 @@ async def draw_love_calculator(
             base.paste(av1, (185, 115), mask=av1)
             base.paste(av2, (704, 117), mask=av2)
 
-            # 3. Vẽ thanh tiến trình tình yêu DƯỚI template (để khung viền và chữ LOVE luôn ở trên cùng)
+            # 3. Vẽ thanh tiến trình tình yêu DƯỚI template (bắt đầu khít mép trái rãnh, không lệch)
             draw_base = ImageDraw.Draw(base)
-            bar_x = 346
-            bar_y = 352
-            bar_max_w = 374
-            bar_h = 35
-            fill_w = max(int(bar_max_w * (percentage / 100)), 20)
-            draw_base.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), radius=17, fill=(255, 75, 140))
+            bar_x = 288
+            bar_y = 351
+            bar_max_w = 432
+            bar_h = 36
+            fill_w = max(int(bar_max_w * (percentage / 100)), 18)
+            draw_base.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), radius=18, fill=(255, 75, 140))
 
             # 4. Phủ template lên trên (bảo vệ tuyệt đối khung viền và chữ LOVE)
             base.alpha_composite(template)
